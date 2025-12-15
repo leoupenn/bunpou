@@ -45,29 +45,48 @@ A Japanese grammar learning application utilizing spaced repetition system (SRS)
 npm install
 ```
 
-2. Set up environment variables:
+2. Set up PostgreSQL database:
+
+Ensure PostgreSQL is installed and running on your system. If you need to install PostgreSQL, see the [official installation guide](https://www.postgresql.org/download/).
+
+Create the database:
+```bash
+createdb bunpou
+```
+
+If the `createdb` command fails with a connection error, ensure PostgreSQL is running. See the [PostgreSQL documentation](https://www.postgresql.org/docs/current/server-start.html) for how to start PostgreSQL on your system.
+
+3. Set up environment variables:
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and add your OpenAI API key:
+Edit `.env` and configure the following:
 ```
+# Update DATABASE_URL with your PostgreSQL connection string
+# Format: postgresql://USERNAME@localhost:5432/bunpou
+# Replace USERNAME with your system username
+DATABASE_URL="postgresql://YOUR_USERNAME@localhost:5432/bunpou"
+
+# Add your OpenAI API key
 OPENAI_API_KEY=your_openai_api_key_here
-DATABASE_URL="file:./dev.db"
+
+# Generate a JWT secret with: openssl rand -base64 32
+JWT_SECRET="your-generated-secret-here"
 ```
 
-3. Set up the database:
+4. Set up the database schema:
 ```bash
 npx prisma generate
 npx prisma db push
 ```
 
-4. (Optional) Seed the database with sample data:
+5. (Optional) Seed the database with sample data:
 ```bash
 npm run seed
 ```
 
-5. Run the development server:
+6. Run the development server:
 ```bash
 npm run dev
 ```

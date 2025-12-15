@@ -267,7 +267,7 @@ export default function LearningPage() {
               e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'
             }}
           >
-            🔗 Reference
+            📚 Docs
           </a>
         )}
       </div>

@@ -208,24 +208,7 @@ export default function MasterReviewPage() {
 
         <div className="grammar-box" style={{ marginBottom: '2rem', position: 'relative' }}>
         <HistoryLink grammarProgressId={currentGrammar.id} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-            <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', margin: 0 }}>{currentGrammar.grammarPoint.name}</h2>
-            <Link
-              href={`/docs/${currentGrammar.grammarPoint.id}`}
-              style={{
-                display: 'inline-block',
-                padding: '0.5rem 1rem',
-                background: '#6366f1',
-                color: 'white',
-                borderRadius: '0.375rem',
-                textDecoration: 'none',
-                fontWeight: 500,
-                fontSize: '0.875rem',
-              }}
-            >
-              📚 Docs
-            </Link>
-          </div>
+          <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{currentGrammar.grammarPoint.name}</h2>
           {currentSituation && (
             <p style={{ fontSize: '1.125rem', marginTop: '1rem', marginBottom: '0.5rem', lineHeight: '1.6' }}>
               {currentSituation.situation}
@@ -263,7 +246,7 @@ export default function MasterReviewPage() {
               e.currentTarget.style.transform = 'translateY(0)'
             }}
           >
-            🔗 Reference
+            📚 Docs
           </a>
         )}
       </div>

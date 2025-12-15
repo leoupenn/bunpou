@@ -11,6 +11,7 @@ interface InventoryItem {
   description: string
   group: number
   jlptLevel?: string
+  referenceUrl: string | null
   situationCount: number
   isLocked?: boolean
   progress: {
@@ -307,23 +308,27 @@ export default function InventoryPage() {
                         Complete previous groups to unlock this grammar point
                       </div>
                     )}
-                    <Link
-                      href={`/docs/${item.id}`}
-                      style={{
-                        display: 'inline-block',
-                        marginTop: '0.5rem',
-                        padding: '0.25rem 0.5rem',
-                        background: '#6366f1',
-                        color: 'white',
-                        borderRadius: '0.25rem',
-                        textDecoration: 'none',
-                        fontSize: '0.75rem',
-                        fontWeight: 500,
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      📚 View Documentation
-                    </Link>
+                    {item.referenceUrl && (
+                      <a
+                        href={item.referenceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'inline-block',
+                          marginTop: '0.5rem',
+                          padding: '0.25rem 0.5rem',
+                          background: '#6366f1',
+                          color: 'white',
+                          borderRadius: '0.25rem',
+                          textDecoration: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 500,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        📚 View Documentation
+                      </a>
+                    )}
                   </div>
                 )}
               </div>

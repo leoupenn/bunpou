@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
         description: gp.description,
         group: gp.group,
         jlptLevel: gp.jlptLevel,
+        referenceUrl: gp.referenceUrl,
         situationCount: gp.situations.length,
         isLocked,
         progress: progress

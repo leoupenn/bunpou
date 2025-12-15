@@ -206,9 +206,9 @@ export default function MasterReviewPage() {
           These are grammar points you&apos;ve mastered. Reviewing them helps maintain long-term retention. Your SRS level will not decrease even if you make mistakes.
         </p>
 
-        <div className="grammar-box" style={{ marginBottom: '2rem', position: 'relative' }}>
+        <div className="grammar-box" style={{ marginBottom: '2rem', position: 'relative', display: 'block' }}>
         <HistoryLink grammarProgressId={currentGrammar.id} />
-          <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{currentGrammar.grammarPoint.name}</h2>
+          <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: 'white' }}>{currentGrammar.grammarPoint.name}</h2>
           {currentSituation && (
             <p style={{ fontSize: '1.125rem', marginTop: '1rem', marginBottom: '0.5rem', lineHeight: '1.6' }}>
               {currentSituation.situation}

@@ -174,22 +174,8 @@ export default function LearningPage() {
         <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
           {currentGrammar.grammarPoint.description}
         </p>
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-          <Link
-            href={`/docs/${currentGrammar.grammarPoint.id}`}
-            style={{
-              display: 'inline-block',
-              padding: '0.5rem 1rem',
-              background: '#6366f1',
-              color: 'white',
-              borderRadius: '0.375rem',
-              textDecoration: 'none',
-              fontWeight: 500,
-            }}
-          >
-            📚 View Documentation
-          </Link>
-          {currentGrammar.grammarPoint.referenceUrl && (
+        {currentGrammar.grammarPoint.referenceUrl && (
+          <div style={{ marginBottom: '1rem' }}>
             <a
               href={currentGrammar.grammarPoint.referenceUrl}
               target="_blank"
@@ -197,17 +183,17 @@ export default function LearningPage() {
               style={{
                 display: 'inline-block',
                 padding: '0.5rem 1rem',
-                background: '#8b5cf6',
+                background: '#6366f1',
                 color: 'white',
                 borderRadius: '0.375rem',
                 textDecoration: 'none',
                 fontWeight: 500,
               }}
             >
-              🔗 External Reference →
+              📚 View Documentation
             </a>
-          )}
-        </div>
+          </div>
+        )}
         {currentSituation && (
           <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '0.375rem', position: 'relative' }}>
             <p style={{ fontSize: '1rem', lineHeight: '1.6', margin: 0, color: '#0c4a6e', paddingRight: currentGrammar.grammarPoint.referenceUrl ? '120px' : '0' }}>

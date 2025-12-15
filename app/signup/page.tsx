@@ -37,10 +37,12 @@ export default function SignupPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Failed to create account')
+        const errorMsg = data.error || 'Failed to create account'
+        setError(errorMsg)
         if (data.details) {
           console.error('Signup error details:', data.details)
         }
+        console.error('Signup failed:', { status: response.status, error: errorMsg })
         setLoading(false)
         return
       }
@@ -52,7 +54,8 @@ export default function SignupPage() {
       router.push('/')
       router.refresh()
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      console.error('Signup error:', err)
+      setError('An error occurred. Please check your connection and try again.')
       setLoading(false)
     }
   }

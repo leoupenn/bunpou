@@ -20,8 +20,10 @@ export default function ReviewForecast({ userId }: ReviewForecastProps) {
   const [forecast, setForecast] = useState<ForecastData | null>(null)
   const [loading, setLoading] = useState(true)
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set())
+  const [skippingWait, setSkippingWait] = useState(false)
 
-  useEffect(() => {
+  const fetchForecast = () => {
+    setLoading(true)
     fetch(`/api/reviews/forecast?userId=${userId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -39,6 +41,10 @@ export default function ReviewForecast({ userId }: ReviewForecastProps) {
         console.error('Error fetching forecast:', err)
         setLoading(false)
       })
+  }
+
+  useEffect(() => {
+    fetchForecast()
   }, [userId])
 
   const toggleDay = (dayKey: string) => {
@@ -62,6 +68,35 @@ export default function ReviewForecast({ userId }: ReviewForecastProps) {
 
   const getMaxCount = (dayForecast: Record<number, number>) => {
     return Math.max(...Object.values(dayForecast), 0)
+  }
+
+  const handleSkipWait = async () => {
+    if (skippingWait) return
+    
+    setSkippingWait(true)
+    try {
+      const response = await fetch('/api/reviews/skip-wait', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Refresh forecast
+        fetchForecast()
+      } else {
+        alert(data.error || 'Error skipping wait time. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error skipping wait time:', error)
+      alert('Error skipping wait time. Please try again.')
+    } finally {
+      setSkippingWait(false)
+    }
   }
 
   if (loading) {
@@ -94,6 +129,20 @@ export default function ReviewForecast({ userId }: ReviewForecastProps) {
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>Review Forecast</h3>
+        <button
+          onClick={handleSkipWait}
+          disabled={skippingWait}
+          className="btn-secondary"
+          style={{ 
+            padding: '0.375rem 0.75rem',
+            fontSize: '0.75rem',
+            opacity: skippingWait ? 0.6 : 1,
+            cursor: skippingWait ? 'not-allowed' : 'pointer'
+          }}
+          title="Make all upcoming reviews immediately available"
+        >
+          {skippingWait ? 'Skipping...' : '⏩ Skip Wait'}
+        </button>
       </div>
 
       {/* Current Reviews */}

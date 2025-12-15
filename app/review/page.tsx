@@ -38,6 +38,7 @@ export default function ReviewPage() {
   const [currentSituation, setCurrentSituation] = useState<Situation | null>(null)
   const [loading, setLoading] = useState(true)
   const [showWordBank, setShowWordBank] = useState(false)
+  const [skippingWait, setSkippingWait] = useState(false)
 
   const fetchAvailableReviews = async () => {
     if (!user) return
@@ -151,6 +152,37 @@ export default function ReviewPage() {
     }
   }
 
+  const handleSkipWait = async () => {
+    if (!user || skippingWait) return
+    
+    setSkippingWait(true)
+    try {
+      const response = await fetch('/api/reviews/skip-wait', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Refresh available reviews
+        await fetchAvailableReviews()
+        // Show success message
+        console.log(data.message)
+      } else {
+        alert(data.error || 'Error skipping wait time. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error skipping wait time:', error)
+      alert('Error skipping wait time. Please try again.')
+    } finally {
+      setSkippingWait(false)
+    }
+  }
+
   if (!user) {
     return (
       <ProtectedRoute>
@@ -219,10 +251,28 @@ export default function ReviewPage() {
       <Link href="/" style={{ marginBottom: '1rem', display: 'inline-block' }}>
         ← Back to Home
       </Link>
-        <h1>Level Review</h1>
-        <p style={{ marginBottom: '1rem' }}>
-          Available Reviews: {grammarPoints.length} | Current: {currentIndex + 1} / {grammarPoints.length}
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div>
+            <h1 style={{ margin: 0 }}>Level Review</h1>
+            <p style={{ marginTop: '0.5rem', marginBottom: 0 }}>
+              Available Reviews: {grammarPoints.length} | Current: {currentIndex + 1} / {grammarPoints.length}
+            </p>
+          </div>
+          <button
+            onClick={handleSkipWait}
+            disabled={skippingWait}
+            className="btn-secondary"
+            style={{ 
+              padding: '0.5rem 1rem',
+              fontSize: '0.875rem',
+              opacity: skippingWait ? 0.6 : 1,
+              cursor: skippingWait ? 'not-allowed' : 'pointer'
+            }}
+            title="Make all upcoming reviews immediately available"
+          >
+            {skippingWait ? 'Skipping...' : '⏩ Skip Wait Time'}
+          </button>
+        </div>
 
         <div className="grammar-box" style={{ marginBottom: '2rem' }}>
         <HistoryLink grammarProgressId={currentGrammar.id} />

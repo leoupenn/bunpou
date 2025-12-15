@@ -378,7 +378,7 @@ function WordBankTable({ wordBank }: { wordBank: string }) {
           <tr key={index} style={{ borderBottom: index < entries.length - 1 ? '1px solid #e5e7eb' : 'none' }}>
             <td style={{ 
               padding: '0.5rem 0.75rem 0.5rem 0', 
-              fontWeight: 'bold',
+              fontWeight: 'normal',
               verticalAlign: 'top',
               width: '40%'
             }}>

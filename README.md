@@ -65,7 +65,7 @@ Edit `.env` and configure the following:
 ```
 # Update DATABASE_URL with your PostgreSQL connection string
 # Format: postgresql://USERNAME@localhost:5432/bunpou
-# Replace YOUR_USERNAME with your system username
+# Replace YOUR_USERNAME with your system username please
 DATABASE_URL="postgresql://YOUR_USERNAME@localhost:5432/bunpou"
 
 # Add your OpenAI API key

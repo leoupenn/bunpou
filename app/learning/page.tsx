@@ -169,28 +169,45 @@ export default function LearningPage() {
         Situation: {currentSituationIndex + 1} / {situations.length}
       </p>
 
-      <div className="card">
+      <div className="card" style={{ position: 'relative' }}>
         <h2>{currentGrammar.grammarPoint.name}</h2>
         <p style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
           {currentGrammar.grammarPoint.description}
         </p>
-        {currentGrammar.grammarPoint.referenceUrl && (
-          <a
-            href={currentGrammar.grammarPoint.referenceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+          <Link
+            href={`/docs/${currentGrammar.grammarPoint.id}`}
             style={{
               display: 'inline-block',
               padding: '0.5rem 1rem',
               background: '#6366f1',
               color: 'white',
               borderRadius: '0.375rem',
-              marginBottom: '1rem',
+              textDecoration: 'none',
+              fontWeight: 500,
             }}
           >
-            View Reference Document →
-          </a>
-        )}
+            📚 View Documentation
+          </Link>
+          {currentGrammar.grammarPoint.referenceUrl && (
+            <a
+              href={currentGrammar.grammarPoint.referenceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block',
+                padding: '0.5rem 1rem',
+                background: '#8b5cf6',
+                color: 'white',
+                borderRadius: '0.375rem',
+                textDecoration: 'none',
+                fontWeight: 500,
+              }}
+            >
+              🔗 External Reference →
+            </a>
+          )}
+        </div>
         {currentSituation.wordBank && (
           <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#f3f4f6', borderRadius: '0.375rem' }}>
               <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Word Bank:</strong>
@@ -220,6 +237,39 @@ export default function LearningPage() {
             If you feel you&apos;ve mastered this grammar point, click to move it to the achievement test.
           </p>
         </div>
+        {currentGrammar.grammarPoint.referenceUrl && (
+          <a
+            href={currentGrammar.grammarPoint.referenceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              position: 'absolute',
+              bottom: '1rem',
+              right: '1rem',
+              padding: '0.5rem 1rem',
+              background: '#8b5cf6',
+              color: 'white',
+              borderRadius: '0.375rem',
+              textDecoration: 'none',
+              fontWeight: 500,
+              fontSize: '0.875rem',
+              transition: 'all 0.2s',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#7c3aed'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.15)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#8b5cf6'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'
+            }}
+          >
+            🔗 Reference
+          </a>
+        )}
       </div>
     </div>
     </ProtectedRoute>

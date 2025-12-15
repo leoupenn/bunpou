@@ -206,9 +206,26 @@ export default function MasterReviewPage() {
           These are grammar points you&apos;ve mastered. Reviewing them helps maintain long-term retention. Your SRS level will not decrease even if you make mistakes.
         </p>
 
-        <div className="grammar-box" style={{ marginBottom: '2rem' }}>
+        <div className="grammar-box" style={{ marginBottom: '2rem', position: 'relative' }}>
         <HistoryLink grammarProgressId={currentGrammar.id} />
-          <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{currentGrammar.grammarPoint.name}</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+            <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', margin: 0 }}>{currentGrammar.grammarPoint.name}</h2>
+            <Link
+              href={`/docs/${currentGrammar.grammarPoint.id}`}
+              style={{
+                display: 'inline-block',
+                padding: '0.5rem 1rem',
+                background: '#6366f1',
+                color: 'white',
+                borderRadius: '0.375rem',
+                textDecoration: 'none',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+              }}
+            >
+              📚 Docs
+            </Link>
+          </div>
           {currentSituation && (
             <p style={{ fontSize: '1.125rem', marginTop: '1rem', marginBottom: '0.5rem', lineHeight: '1.6' }}>
               {currentSituation.situation}
@@ -217,6 +234,38 @@ export default function MasterReviewPage() {
           <p style={{ fontSize: '0.875rem', opacity: 0.8, marginTop: '0.5rem' }}>
           SRS Level: {currentGrammar.srsLevel} (Mastered)
         </p>
+        {currentGrammar.grammarPoint.referenceUrl && (
+          <a
+            href={currentGrammar.grammarPoint.referenceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              position: 'absolute',
+              bottom: '1rem',
+              right: '1rem',
+              padding: '0.5rem 1rem',
+              background: 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              color: 'white',
+              borderRadius: '0.375rem',
+              textDecoration: 'none',
+              fontWeight: 500,
+              fontSize: '0.875rem',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            🔗 Reference
+          </a>
+        )}
       </div>
 
         <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>

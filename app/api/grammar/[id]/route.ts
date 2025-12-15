@@ -11,6 +11,11 @@ export async function GET(
     const grammarPoint = await prisma.grammarPoint.findUnique({
       where: { id: params.id },
       include: {
+        situations: {
+          orderBy: {
+            lessonNumber: 'asc',
+          },
+        },
         grammarProgress: {
           where: {
             userId: request.nextUrl.searchParams.get('userId') || undefined,

@@ -12,6 +12,7 @@
     "db:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
     "import-csv": "tsx prisma/import-csv.ts",
+    "import-reference-docs": "tsx prisma/import-reference-docs.ts",
     "reset-users": "tsx prisma/reset-users.ts",
     "migrate:to-vercel": "tsx prisma/migrate-to-vercel.ts migrate",
     "migrate:export": "tsx prisma/migrate-to-vercel.ts export"

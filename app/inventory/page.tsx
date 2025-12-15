@@ -10,7 +10,9 @@ interface InventoryItem {
   name: string
   description: string
   group: number
+  jlptLevel?: string
   situationCount: number
+  isLocked?: boolean
   progress: {
     id: string
     srsLevel: number
@@ -210,8 +212,9 @@ export default function InventoryPage() {
         >
           {filteredInventory.map((item) => {
             const isStarted = item.progress !== null
+            const isLocked = item.isLocked ?? false
             const srsLevel = item.progress?.srsLevel ?? null
-            const backgroundColor = getSRSColor(srsLevel, isStarted)
+            const backgroundColor = isLocked ? '#f3f4f6' : getSRSColor(srsLevel, isStarted)
             const isHovered = hoveredId === item.id
 
             return (
@@ -222,20 +225,26 @@ export default function InventoryPage() {
                 style={{
                   background: backgroundColor,
                   border: '2px solid',
-                  borderColor: isStarted ? '#6366f1' : '#d1d5db',
+                  borderColor: isLocked ? '#9ca3af' : isStarted ? '#6366f1' : '#d1d5db',
                   borderRadius: '0.5rem',
                   padding: '1rem',
-                  cursor: 'pointer',
+                  cursor: isLocked ? 'not-allowed' : 'pointer',
                   transition: 'transform 0.2s, box-shadow 0.2s',
-                  transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
-                  boxShadow: isHovered
+                  transform: isHovered && !isLocked ? 'translateY(-2px)' : 'translateY(0)',
+                  boxShadow: isHovered && !isLocked
                     ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                     : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
                   position: 'relative',
+                  opacity: isLocked ? 0.7 : 1,
                 }}
               >
-                {isStarted && item.progress && (
-                  <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', opacity: isHovered ? 1 : 0.6, transition: 'opacity 0.2s' }}>
+                {isLocked && (
+                  <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', padding: '0.25rem 0.5rem', background: '#9ca3af', color: 'white', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                    🔒 Locked
+                  </div>
+                )}
+                {isStarted && item.progress && !isLocked && (
+                  <div style={{ position: 'absolute', top: '0.5rem', right: isLocked ? '4rem' : '0.5rem', opacity: isHovered ? 1 : 0.6, transition: 'opacity 0.2s' }}>
                     <Link
                       href={`/history/${item.progress.id}`}
                       style={{
@@ -256,20 +265,25 @@ export default function InventoryPage() {
                 )}
                 <h3 style={{ marginBottom: '0.5rem', fontSize: '1.125rem', fontWeight: 'bold' }}>
                   {item.name}
+                  {item.jlptLevel && (
+                    <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: '#6b7280', fontWeight: 'normal' }}>
+                      {item.jlptLevel}
+                    </span>
+                  )}
                 </h3>
-                <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem', opacity: 0.8 }}>
+                <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem', opacity: isLocked ? 0.6 : 0.8 }}>
                   {item.description}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
                   <div>
                     <div style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                      {getSRSLabel(srsLevel, isStarted)}
+                      {isLocked ? '🔒 Locked' : getSRSLabel(srsLevel, isStarted)}
                     </div>
                     <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-                      {item.situationCount} situation{item.situationCount !== 1 ? 's' : ''}
+                      Group {item.group} • {item.situationCount} situation{item.situationCount !== 1 ? 's' : ''}
                     </div>
                   </div>
-                  {isStarted && item.progress && (
+                  {isStarted && item.progress && !isLocked && (
                     <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>
                       {item.progress.status === 'mastered' && '✓'}
                       {item.progress.status === 'achievement_test' && '🎯'}
@@ -278,12 +292,38 @@ export default function InventoryPage() {
                     </div>
                   )}
                 </div>
-                {isHovered && isStarted && item.progress && (
+                {isHovered && (
                   <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(0,0,0,0.1)', fontSize: '0.75rem' }}>
-                    <div>Status: {item.progress.status}</div>
-                    {item.progress.nextReviewAt && (
-                      <div>Next review: {new Date(item.progress.nextReviewAt).toLocaleDateString()}</div>
+                    {isStarted && item.progress && !isLocked && (
+                      <>
+                        <div>Status: {item.progress.status}</div>
+                        {item.progress.nextReviewAt && (
+                          <div>Next review: {new Date(item.progress.nextReviewAt).toLocaleDateString()}</div>
+                        )}
+                      </>
                     )}
+                    {isLocked && (
+                      <div style={{ color: '#6b7280', marginBottom: '0.5rem' }}>
+                        Complete previous groups to unlock this grammar point
+                      </div>
+                    )}
+                    <Link
+                      href={`/docs/${item.id}`}
+                      style={{
+                        display: 'inline-block',
+                        marginTop: '0.5rem',
+                        padding: '0.25rem 0.5rem',
+                        background: '#6366f1',
+                        color: 'white',
+                        borderRadius: '0.25rem',
+                        textDecoration: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      📚 View Documentation
+                    </Link>
                   </div>
                 )}
               </div>
@@ -293,7 +333,18 @@ export default function InventoryPage() {
 
         {filteredInventory.length === 0 && (
           <div className="card" style={{ marginTop: '2rem', textAlign: 'center' }}>
-            <p>No grammar points found matching the selected filter.</p>
+            {safeInventory.length === 0 ? (
+              <div>
+                <p style={{ fontSize: '1.125rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                  No grammar points found
+                </p>
+                <p style={{ color: '#6b7280' }}>
+                  The database may be empty. Please check if grammar points have been seeded.
+                </p>
+              </div>
+            ) : (
+              <p>No grammar points found matching the selected filter.</p>
+            )}
           </div>
         )}
       </div>

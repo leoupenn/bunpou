@@ -27,6 +27,11 @@ export async function evaluateSentence(
   situation: string,
   userSentence: string
 ): Promise<SentenceEvaluation> {
+  // Check API key before making request
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not set in environment variables')
+  }
+
   const prompt = `You are a Japanese grammar teacher evaluating a student's sentence.
 
 Grammar Point: ${grammarPoint}
@@ -70,10 +75,39 @@ Respond in JSON format:
     }
 
     const evaluation = JSON.parse(content) as SentenceEvaluation
+    
+    // Validate the evaluation has required fields
+    if (typeof evaluation.isCorrect !== 'boolean' || !evaluation.feedback) {
+      throw new Error('Invalid evaluation format from OpenAI')
+    }
+    
     return evaluation
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error evaluating sentence:', error)
-    throw new Error('Failed to evaluate sentence')
+    
+    // Preserve original error message
+    let errorMessage = 'Failed to evaluate sentence'
+    
+    if (error?.message) {
+      errorMessage = error.message
+    } else if (error?.error?.message) {
+      errorMessage = error.error.message
+    }
+    
+    // Handle specific OpenAI API errors
+    if (error?.status === 401) {
+      errorMessage = 'OpenAI API key is invalid or missing'
+    } else if (error?.status === 429) {
+      errorMessage = 'OpenAI API rate limit exceeded. Please try again later.'
+    } else if (error?.status === 500 || error?.status === 503) {
+      errorMessage = 'OpenAI API is temporarily unavailable. Please try again later.'
+    } else if (error?.code === 'ENOTFOUND' || error?.code === 'ECONNREFUSED') {
+      errorMessage = 'Cannot connect to OpenAI API. Check your internet connection.'
+    } else if (error instanceof SyntaxError) {
+      errorMessage = 'Failed to parse OpenAI response. Please try again.'
+    }
+    
+    throw new Error(errorMessage)
   }
 }
 

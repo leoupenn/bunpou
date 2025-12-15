@@ -88,11 +88,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Evaluate sentence using OpenAI
-    const evaluation = await evaluateSentence(
-      grammarPoint.name,
-      situation.situation,
-      userSentence
-    )
+    let evaluation: any
+    try {
+      evaluation = await evaluateSentence(
+        grammarPoint.name,
+        situation.situation,
+        userSentence
+      )
+    } catch (error: any) {
+      console.error('OpenAI evaluation error:', error)
+      // Re-throw with more context
+      throw new Error(`OpenAI evaluation failed: ${error.message || 'Unknown error'}`)
+    }
 
     // Create attempt record
     const attempt = await prisma.attempt.create({

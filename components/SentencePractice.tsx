@@ -36,8 +36,12 @@ export default function SentencePractice({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!sentence.trim()) return
+    if (!sentence.trim()) {
+      console.log('Sentence is empty, not submitting')
+      return
+    }
 
+    console.log('Submitting sentence:', { grammarPointId, situationId, attemptType, sentenceLength: sentence.length })
     setLoading(true)
     setFeedback(null)
 
@@ -56,7 +60,16 @@ export default function SentencePractice({
         }),
       })
 
+      console.log('Response status:', response.status, response.ok)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('API error:', errorData)
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log('Response data:', data)
 
       if (data.evaluation) {
         setFeedback({
@@ -65,14 +78,19 @@ export default function SentencePractice({
           hints: data.evaluation.hints,
           corrections: data.evaluation.corrections,
         })
-
-        // Don't auto-advance - user must click Continue or press Enter
+        console.log('Feedback set:', data.evaluation.isCorrect ? 'Correct' : 'Incorrect')
+      } else {
+        console.error('No evaluation in response:', data)
+        setFeedback({
+          isCorrect: false,
+          message: 'Error: No evaluation received. Please try again.',
+        })
       }
     } catch (error) {
       console.error('Error submitting sentence:', error)
       setFeedback({
         isCorrect: false,
-        message: 'Error evaluating sentence. Please try again.',
+        message: `Error evaluating sentence: ${error instanceof Error ? error.message : 'Please try again.'}`,
       })
     } finally {
       setLoading(false)
@@ -119,7 +137,12 @@ export default function SentencePractice({
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
+      <form 
+        onSubmit={(e) => {
+          console.log('Form onSubmit triggered')
+          handleSubmit(e)
+        }}
+      >
         <textarea
           className="input"
           value={sentence}
@@ -134,9 +157,30 @@ export default function SentencePractice({
           type="submit"
           className="btn-primary"
           disabled={loading || !sentence.trim()}
-          style={{ marginTop: '1rem', width: '100%', padding: '0.75rem 1.5rem', fontSize: '1rem' }}
+          style={{ 
+            marginTop: '1rem', 
+            width: '100%', 
+            padding: '0.75rem 1.5rem', 
+            fontSize: '1rem',
+            opacity: (loading || !sentence.trim()) ? 0.6 : 1,
+            cursor: (loading || !sentence.trim()) ? 'not-allowed' : 'pointer'
+          }}
+          onClick={(e) => {
+            console.log('Submit button clicked', { 
+              loading, 
+              hasSentence: !!sentence.trim(), 
+              sentenceLength: sentence.length,
+              disabled: loading || !sentence.trim()
+            })
+          }}
         >
-          {loading ? <span className="loading" /> : 'Submit Answer'}
+          {loading ? (
+            <>
+              <span className="loading" /> Submitting...
+            </>
+          ) : (
+            'Submit Answer'
+          )}
         </button>
       </form>
 

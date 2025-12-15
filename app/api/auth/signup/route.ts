@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
       console.error('Error initializing grammar progress (non-fatal):', progressError)
     }
 
-    // Generate token
-    const token = generateToken(user.id)
+    // Generate token (no "remember me" on signup; default to shorter expiry)
+    const token = generateToken(user.id, false)
 
     // Set cookie
     const response = NextResponse.json({

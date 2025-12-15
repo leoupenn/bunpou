@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { format, parseISO, isToday, isTomorrow, addDays } from 'date-fns'
 
 interface ReviewForecastProps {
@@ -165,17 +166,23 @@ export default function ReviewForecast({ userId }: ReviewForecastProps) {
                     Ready to review immediately
                   </div>
                 </div>
-                <div style={{
-                  background: '#1e40af',
-                  color: 'white',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.5rem',
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
-                  boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.2)'
-                }}>
-                  {forecast.currentReviews}
-                </div>
+                <Link
+                  href="/review"
+                  aria-label="Go to Level Review"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <div style={{
+                    background: '#1e40af',
+                    color: 'white',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+                  }}>
+                    {forecast.currentReviews}
+                  </div>
+                </Link>
               </div>
             </div>
           )}
@@ -196,17 +203,23 @@ export default function ReviewForecast({ userId }: ReviewForecastProps) {
                     Mastered items ready for review
                   </div>
                 </div>
-                <div style={{
-                  background: '#065f46',
-                  color: 'white',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.5rem',
-                  fontSize: '1.5rem',
-                  fontWeight: 700,
-                  boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.2)'
-                }}>
-                  {forecast.currentMasterReviews}
-                </div>
+                <Link
+                  href="/master-review"
+                  aria-label="Go to Master Review"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <div style={{
+                    background: '#065f46',
+                    color: 'white',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+                  }}>
+                    {forecast.currentMasterReviews}
+                  </div>
+                </Link>
               </div>
             </div>
           )}

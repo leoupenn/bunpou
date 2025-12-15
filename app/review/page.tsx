@@ -320,6 +320,13 @@ export default function ReviewPage() {
       </div>
 
         <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
+        {currentSituation && (
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '0.375rem' }}>
+            <p style={{ fontSize: '1rem', lineHeight: '1.6', margin: 0, color: '#0c4a6e' }}>
+              <strong>Prompt:</strong> {currentSituation.situation}
+            </p>
+          </div>
+        )}
         {currentSituation.wordBank && (
             <div style={{ marginBottom: '1.5rem' }}>
               <button

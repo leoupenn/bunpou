@@ -7,27 +7,25 @@ This guide will help you deploy Bunpou to Vercel with a custom domain.
 1. A GitHub account with your repository pushed
 2. A Vercel account (free tier works)
 3. A custom domain (optional, but recommended)
-4. A database provider (see Database Setup below)
+
+## Quick Start: Vercel Postgres Setup
+
+**For detailed Vercel Postgres setup, see [VERCEL_POSTGRES_SETUP.md](./VERCEL_POSTGRES_SETUP.md)**
+
+### Quick Steps:
+
+1. **Deploy to Vercel** (import from GitHub)
+2. **Add Vercel Postgres** (Storage tab → Create Database → Postgres)
+3. **Set Environment Variables:**
+   - `DATABASE_URL` = Use value from `POSTGRES_PRISMA_URL` (auto-added by Vercel)
+   - `JWT_SECRET` = Generate with `openssl rand -base64 32`
+   - `OPENAI_API_KEY` = Your OpenAI API key
+4. **Run Migrations:** `npx prisma migrate deploy`
+5. **Add Custom Domain** (Settings → Domains)
 
 ## Important: Database Migration
 
-**Your app currently uses SQLite, which won't work on Vercel's serverless functions.** You need to migrate to a hosted database.
-
-### Recommended: PostgreSQL on Vercel Postgres or Railway
-
-1. **Option A: Vercel Postgres** (Easiest)
-   - Go to your Vercel project dashboard
-   - Add "Postgres" integration
-   - Vercel will provide connection string automatically
-
-2. **Option B: Railway** (Free tier available)
-   - Visit https://railway.app
-   - Create a new PostgreSQL database
-   - Copy the connection string
-
-3. **Update Prisma Schema**
-   - Change `provider = "sqlite"` to `provider = "postgresql"` in `prisma/schema.prisma`
-   - Update `DATABASE_URL` in environment variables
+**The Prisma schema has been updated to use PostgreSQL.** Vercel Postgres is the recommended database provider as it integrates seamlessly with Vercel deployments.
 
 ## Deployment Steps
 

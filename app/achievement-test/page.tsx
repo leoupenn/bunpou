@@ -35,6 +35,7 @@ export default function AchievementTestPage() {
   const [results, setResults] = useState<boolean[]>([])
   const [completed, setCompleted] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
 
   const fetchAchievementTests = () => {
     if (!user) return
@@ -60,12 +61,14 @@ export default function AchievementTestPage() {
   const handleResult = (isCorrect: boolean) => {
     const newResults = [...results, isCorrect]
     setResults(newResults)
+    console.log(`Test ${currentTestIndex + 1}/5: ${isCorrect ? 'Correct' : 'Incorrect'}. Results:`, newResults)
 
     if (currentTestIndex < 4) {
       // Move to next test (same grammar point)
       setCurrentTestIndex(currentTestIndex + 1)
     } else {
       // Completed 5 tests, submit results
+      console.log('All 5 tests completed. Submitting results...', newResults)
       submitAchievementTest(newResults)
     }
   }
@@ -86,12 +89,20 @@ export default function AchievementTestPage() {
   }
 
   const submitAchievementTest = async (finalResults: boolean[]) => {
-    if (!selectedGrammarProgress || !user) return
+    if (!selectedGrammarProgress || !user || submitting) return
 
+    setSubmitting(true)
     const correctCount = finalResults.filter((r) => r).length
     const isMastered = correctCount >= 3
 
     try {
+      console.log('Submitting achievement test:', {
+        userId: user.id,
+        grammarProgressId: selectedGrammarProgress.id,
+        results: finalResults,
+        correctCount,
+      })
+
       const response = await fetch('/api/achievement-test', {
         method: 'POST',
         headers: {
@@ -104,7 +115,13 @@ export default function AchievementTestPage() {
         }),
       })
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+      }
+
       const data = await response.json()
+      console.log('Achievement test response:', data)
 
       if (data.isMastered) {
         setCompleted(true)
@@ -121,7 +138,9 @@ export default function AchievementTestPage() {
       }
     } catch (error) {
       console.error('Error submitting achievement test:', error)
-      alert('Error submitting test. Please try again.')
+      alert(`Error submitting test: ${error instanceof Error ? error.message : 'Please try again.'}`)
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -278,6 +297,11 @@ export default function AchievementTestPage() {
           <p style={{ fontSize: '0.875rem', color: '#666' }}>
             You need to get 3 out of 5 correct to master this grammar point.
           </p>
+          {submitting && (
+            <p style={{ marginTop: '0.5rem', color: '#059669', fontWeight: 'bold' }}>
+              Submitting results...
+            </p>
+          )}
         </div>
 
       {!currentSituation ? (

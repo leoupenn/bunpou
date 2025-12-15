@@ -12,7 +12,9 @@
     "db:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
     "import-csv": "tsx prisma/import-csv.ts",
-    "reset-users": "tsx prisma/reset-users.ts"
+    "reset-users": "tsx prisma/reset-users.ts",
+    "migrate:to-vercel": "tsx prisma/migrate-to-vercel.ts migrate",
+    "migrate:export": "tsx prisma/migrate-to-vercel.ts export"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",
@@ -31,10 +33,12 @@
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
+    "dotenv": "^17.2.3",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.0.4",
     "prisma": "^5.7.1",
     "tsx": "^4.7.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vercel": "^50.0.1"
   }
 }

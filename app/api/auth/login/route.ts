@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       // If rememberMe is true, let JWT control lifetime (cookie lives long, e.g. 30d)
       // If false, make this a session cookie by omitting maxAge
       ...(rememberMe ? { maxAge: 60 * 60 * 24 * 30 } : {}),

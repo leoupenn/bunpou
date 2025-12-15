@@ -71,24 +71,28 @@ export default function Home() {
         </div>
 
         <nav style={{ marginBottom: '2rem' }}>
-          <Link href="/learning" style={{ marginRight: '1rem', padding: '0.5rem 1rem', background: '#6366f1', color: 'white', borderRadius: '0.375rem' }}>
-            Learning Workflow
-          </Link>
-          <Link href="/review" style={{ marginRight: '1rem', padding: '0.5rem 1rem', background: '#8b5cf6', color: 'white', borderRadius: '0.375rem' }}>
-            Level Review
-          </Link>
-          <Link href="/master-review" style={{ marginRight: '1rem', padding: '0.5rem 1rem', background: '#06b6d4', color: 'white', borderRadius: '0.375rem' }}>
-            Master Review
-          </Link>
-          <Link href="/achievement-test" style={{ marginRight: '1rem', padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '0.375rem' }}>
-            Achievement Test
-          </Link>
-          <Link href="/progress" style={{ marginRight: '1rem', padding: '0.5rem 1rem', background: '#f59e0b', color: 'white', borderRadius: '0.375rem' }}>
-            My Progress
-          </Link>
-          <Link href="/inventory" style={{ marginRight: '1rem', padding: '0.5rem 1rem', background: '#ec4899', color: 'white', borderRadius: '0.375rem' }}>
-            Inventory
-          </Link>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <Link href="/learning" style={{ padding: '0.5rem 1rem', background: '#6366f1', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
+              Learn New Grammar
+            </Link>
+            <Link href="/review" style={{ padding: '0.5rem 1rem', background: '#8b5cf6', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
+              Review
+            </Link>
+            <Link href="/master-review" style={{ padding: '0.5rem 1rem', background: '#06b6d4', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
+              Master Review
+            </Link>
+            <Link href="/achievement-test" style={{ padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
+              Achievement Test
+            </Link>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <Link href="/progress" style={{ padding: '0.5rem 1rem', background: '#f59e0b', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
+              My Progress
+            </Link>
+            <Link href="/inventory" style={{ padding: '0.5rem 1rem', background: '#ec4899', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
+              Inventory
+            </Link>
+          </div>
         </nav>
 
         {/* Dashboard Grid */}

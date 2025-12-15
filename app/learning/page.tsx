@@ -117,9 +117,9 @@ export default function LearningPage() {
   if (loading) {
     return (
       <ProtectedRoute>
-      <div className="container">
-        <h1>Learning Workflow</h1>
-        <p>Loading...</p>
+        <div className="container">
+          <h1>Learn New Grammar</h1>
+          <p>Loading...</p>
       </div>
       </ProtectedRoute>
     )
@@ -127,10 +127,10 @@ export default function LearningPage() {
 
   if (grammarPoints.length === 0) {
     return (
-      <div className="container">
-        <h1>Learning Workflow</h1>
-        <div className="card">
-          <p>No new grammar points to learn. Great job!</p>
+        <div className="container">
+          <h1>Learn New Grammar</h1>
+          <div className="card">
+            <p>No new grammar points to learn. Great job!</p>
           <Link href="/" style={{ display: 'inline-block', marginTop: '1rem' }}>
             <button className="btn-primary">Back to Home</button>
           </Link>
@@ -148,7 +148,7 @@ export default function LearningPage() {
     return (
       <ProtectedRoute>
         <div className="container">
-          <h1>Learning Workflow</h1>
+          <h1>Learn New Grammar</h1>
           <div className="card">
             <p>No situations available for this grammar point.</p>
           </div>
@@ -163,7 +163,7 @@ export default function LearningPage() {
       <Link href="/" style={{ marginBottom: '1rem', display: 'inline-block' }}>
         ← Back to Home
       </Link>
-      <h1>Learning Workflow</h1>
+      <h1>Learn New Grammar</h1>
       <p style={{ marginBottom: '1rem' }}>
         Grammar Point: {currentIndex + 1} / {grammarPoints.length} | 
         Situation: {currentSituationIndex + 1} / {situations.length}

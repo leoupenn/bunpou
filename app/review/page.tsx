@@ -140,7 +140,6 @@ export default function ReviewPage() {
       })
 
       if (response.ok) {
-        alert('Grammar point moved to achievement test!')
         // Refresh available reviews
         fetchAvailableReviews()
       } else {

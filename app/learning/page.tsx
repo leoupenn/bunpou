@@ -89,7 +89,6 @@ export default function LearningPage() {
       })
 
       if (response.ok) {
-        alert('Grammar point moved to achievement test!')
         // Remove from current list and move to next
         const remaining = grammarPoints.filter((_, i) => i !== currentIndex)
         setGrammarPoints(remaining)

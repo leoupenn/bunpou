@@ -7,20 +7,9 @@ import JLPTProgressChart from '@/components/JLPTProgressChart'
 import SublevelProgress from '@/components/SublevelProgress'
 import MasteryOverview from '@/components/MasteryOverview'
 import DashboardGrid from '@/components/DashboardGrid'
+import Navbar from '@/components/Navbar'
 import { useUser } from '@/contexts/UserContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
-
-function LogoutButton() {
-  const { logout } = useUser()
-  return (
-    <button
-      onClick={logout}
-      style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
-    >
-      Logout
-    </button>
-  )
-}
 
 export default function Home() {
   const { user, loading } = useUser()
@@ -59,41 +48,11 @@ export default function Home() {
 
   return (
     <ProtectedRoute>
+      <Navbar />
       <div className="container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ margin: 0 }}>Bunpou - Japanese Grammar Learning</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              {user.name || user.email}
-            </span>
-            <LogoutButton />
-          </div>
-        </div>
-
-        <nav style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
-            <Link href="/learning" style={{ padding: '0.5rem 1rem', background: '#6366f1', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
-              Learn New Grammar
-            </Link>
-            <Link href="/review" style={{ padding: '0.5rem 1rem', background: '#8b5cf6', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
-              Review
-            </Link>
-            <Link href="/master-review" style={{ padding: '0.5rem 1rem', background: '#06b6d4', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
-              Master Review
-            </Link>
-            <Link href="/achievement-test" style={{ padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
-              Achievement Test
-            </Link>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <Link href="/progress" style={{ padding: '0.5rem 1rem', background: '#f59e0b', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
-              My Progress
-            </Link>
-            <Link href="/inventory" style={{ padding: '0.5rem 1rem', background: '#ec4899', color: 'white', borderRadius: '0.375rem', textDecoration: 'none', fontWeight: 500 }}>
-              Inventory
-            </Link>
-          </div>
-        </nav>
+        <h1 style={{ marginBottom: '2rem', fontSize: '2rem', fontWeight: 'bold' }}>
+          Dashboard
+        </h1>
 
         {/* Dashboard Grid */}
         <DashboardGrid userId={user.id} />

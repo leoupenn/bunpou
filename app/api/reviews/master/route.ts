@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 // Get available master reviews (level 6, nextReviewAt <= now)
 export async function GET(request: NextRequest) {
   try {

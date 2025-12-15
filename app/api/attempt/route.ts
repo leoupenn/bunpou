@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { evaluateSentence } from '@/lib/openai'
 import { calculateNextReview } from '@/lib/srs'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getNextSituation } from '@/lib/situation-selector'
 
+export const dynamic = 'force-dynamic'
+
 // Get the next situation to use for a grammar point
 export async function GET(request: NextRequest) {
   try {

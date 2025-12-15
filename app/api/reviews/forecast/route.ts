@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { addDays, startOfDay, endOfDay, format, isSameDay } from 'date-fns'
 
+export const dynamic = 'force-dynamic'
+
 // Get review forecast
 export async function GET(request: NextRequest) {
   try {

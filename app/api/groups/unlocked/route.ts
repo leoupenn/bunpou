@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUnlockedGroups, getGroupProgress, canAccessGroup } from '@/lib/group-progression'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Get all groups with their unlock status and progress for a user
  */

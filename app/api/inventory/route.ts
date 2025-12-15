@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 // Get all grammar points with their progress status for inventory view
 export async function GET(request: NextRequest) {
   try {

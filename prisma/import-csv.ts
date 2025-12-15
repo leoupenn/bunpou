@@ -123,7 +123,7 @@ async function main() {
   let errors = 0
 
   // Process each grammar point
-  for (const [grammarPointName, situations] of grammarPointMap.entries()) {
+  for (const [grammarPointName, situations] of Array.from(grammarPointMap.entries())) {
     try {
       // Get the group from the first situation (all should have the same group)
       const group = situations[0].group

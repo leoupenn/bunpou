@@ -11,6 +11,7 @@ async function main() {
       id: 'user-1',
       email: 'test@example.com',
       name: 'Test User',
+      passwordHash: 'dummy-hash-for-seed',
     },
   })
 
@@ -22,42 +23,50 @@ async function main() {
       name: '〜てください',
       description: 'Polite request form. Used to ask someone to do something politely.',
       referenceUrl: 'https://example.com/te-kudasai',
-      situation: 'You want to ask your teacher to repeat the question.',
+      group: 1,
+      jlptLevel: 'N5',
     },
     {
       name: '〜たい',
       description: 'Expresses desire or want to do something.',
       referenceUrl: 'https://example.com/tai',
-      situation: 'You want to express that you want to eat sushi.',
+      group: 1,
+      jlptLevel: 'N5',
     },
     {
       name: '〜なければならない',
       description: 'Expresses obligation or necessity. Must do something.',
       referenceUrl: 'https://example.com/nakereba-naranai',
-      situation: 'You need to express that you must study for the exam.',
+      group: 1,
+      jlptLevel: 'N5',
     },
     {
       name: '〜てもいい',
       description: 'Asking for or giving permission. "May I..." or "It\'s okay to..."',
       referenceUrl: 'https://example.com/temo-ii',
-      situation: 'You want to ask if you can leave early.',
+      group: 1,
+      jlptLevel: 'N5',
     },
     {
       name: '〜ながら',
       description: 'Expresses doing two actions simultaneously. "While doing..."',
       referenceUrl: 'https://example.com/nagara',
-      situation: 'You want to say you listen to music while studying.',
+      group: 1,
+      jlptLevel: 'N5',
     },
   ]
 
   for (const gp of grammarPoints) {
     // Create grammar point
     const grammarPoint = await prisma.grammarPoint.upsert({
-      where: { id: `gp-${gp.name.replace(/[^a-zA-Z0-9]/g, '-')}` },
+      where: { name: gp.name },
       update: {},
       create: {
-        id: `gp-${gp.name.replace(/[^a-zA-Z0-9]/g, '-')}`,
-        ...gp,
+        name: gp.name,
+        description: gp.description,
+        referenceUrl: gp.referenceUrl,
+        group: gp.group,
+        jlptLevel: gp.jlptLevel,
       },
     })
 

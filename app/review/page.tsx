@@ -78,7 +78,7 @@ export default function ReviewPage() {
     if (user) {
       fetchAvailableReviews()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   // Fetch next situation when grammar point changes
@@ -86,7 +86,7 @@ export default function ReviewPage() {
     if (grammarPoints.length > 0 && currentIndex < grammarPoints.length && user && !loading) {
       fetchNextSituation(grammarPoints[currentIndex].id)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex])
 
   const handleCorrect = async () => {

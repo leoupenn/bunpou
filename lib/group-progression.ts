@@ -89,7 +89,7 @@ export async function getUnlockedGroups(userId: string): Promise<number[]> {
     },
   })
 
-  const uniqueGroups = [...new Set(allGroups.map((g) => g.group))].sort(
+  const uniqueGroups = Array.from(new Set(allGroups.map((g) => g.group))).sort(
     (a, b) => a - b
   )
 

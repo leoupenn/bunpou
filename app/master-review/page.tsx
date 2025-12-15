@@ -39,19 +39,6 @@ export default function MasterReviewPage() {
   const [loading, setLoading] = useState(true)
   const [showWordBank, setShowWordBank] = useState(false)
 
-  useEffect(() => {
-    if (user) {
-      fetchAvailableReviews()
-    }
-  }, [user])
-
-  // Fetch next situation when grammar point changes
-  useEffect(() => {
-    if (grammarPoints.length > 0 && currentIndex < grammarPoints.length && user && !loading) {
-      fetchNextSituation(grammarPoints[currentIndex].id)
-    }
-  }, [currentIndex])
-
   const fetchAvailableReviews = async () => {
     if (!user) return
     try {
@@ -86,6 +73,21 @@ export default function MasterReviewPage() {
       setCurrentSituation(null)
     }
   }
+
+  useEffect(() => {
+    if (user) {
+      fetchAvailableReviews()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // Fetch next situation when grammar point changes
+  useEffect(() => {
+    if (grammarPoints.length > 0 && currentIndex < grammarPoints.length && user && !loading) {
+      fetchNextSituation(grammarPoints[currentIndex].id)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex])
 
   const handleCorrect = async () => {
     const currentGrammar = grammarPoints[currentIndex]
@@ -154,7 +156,7 @@ export default function MasterReviewPage() {
         <div className="card">
           <p>No master reviews available at this time. Check back later!</p>
           <p style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.5rem' }}>
-            Master reviews are for grammar points you've mastered (SRS Level 6). They appear weekly to help maintain your knowledge.
+            Master reviews are for grammar points you&apos;ve mastered (SRS Level 6). They appear weekly to help maintain your knowledge.
           </p>
           <Link href="/" style={{ display: 'inline-block', marginTop: '1rem' }}>
             <button className="btn-primary">Back to Home</button>
@@ -201,7 +203,7 @@ export default function MasterReviewPage() {
           Available Master Reviews: {grammarPoints.length} | Current: {currentIndex + 1} / {grammarPoints.length}
         </p>
         <p style={{ fontSize: '0.875rem', color: '#666', marginBottom: '1rem' }}>
-          These are grammar points you've mastered. Reviewing them helps maintain long-term retention. Your SRS level will not decrease even if you make mistakes.
+          These are grammar points you&apos;ve mastered. Reviewing them helps maintain long-term retention. Your SRS level will not decrease even if you make mistakes.
         </p>
 
         <div className="grammar-box" style={{ marginBottom: '2rem' }}>

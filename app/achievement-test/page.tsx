@@ -54,7 +54,7 @@ export default function AchievementTestPage() {
     if (user) {
       fetchAchievementTests()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const handleResult = (isCorrect: boolean) => {

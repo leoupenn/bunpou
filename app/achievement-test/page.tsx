@@ -36,6 +36,7 @@ export default function AchievementTestPage() {
   const [completed, setCompleted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [testSituations, setTestSituations] = useState<Situation[]>([])
 
   const fetchAchievementTests = () => {
     if (!user) return
@@ -65,6 +66,7 @@ export default function AchievementTestPage() {
 
     const correctCount = newResults.filter((r) => r).length
     const wrongCount = newResults.filter((r) => !r).length
+    const maxTests = testSituations.length > 0 ? testSituations.length : 5
 
     // Early termination: 3 correct = pass, 3 wrong = fail
     if (correctCount >= 3) {
@@ -75,12 +77,12 @@ export default function AchievementTestPage() {
       // Failed early with 3 wrong (can't reach 3 correct anymore)
       console.log('Failed early with 3 wrong answers. Submitting results...', newResults)
       submitAchievementTest(newResults, false)
-    } else if (currentTestIndex < 4) {
-      // Move to next test (same grammar point)
+    } else if (currentTestIndex < maxTests - 1) {
+      // Move to next test (same grammar point), no repetition within this session
       setCurrentTestIndex(currentTestIndex + 1)
     } else {
-      // Completed 5 tests, submit results
-      console.log('All 5 tests completed. Submitting results...', newResults)
+      // Completed all tests for this session, submit results
+      console.log(`All ${maxTests} tests completed. Submitting results...`, newResults)
       submitAchievementTest(newResults, correctCount >= 3)
     }
   }
@@ -90,6 +92,29 @@ export default function AchievementTestPage() {
     setCurrentTestIndex(0)
     setResults([])
     setCompleted(false)
+
+    // Prepare randomized, non-repeating situations for this test session
+    const allSituations = grammarProgress.grammarPoint.situations || []
+    if (allSituations.length === 0) {
+      setTestSituations([])
+      return
+    }
+
+    // Shuffle situations
+    const shuffled = [...allSituations].sort(() => Math.random() - 0.5)
+
+    // We want between 3 and 5 tests total
+    const desiredTests = Math.min(5, Math.max(3, shuffled.length))
+
+    // Build test sequence: use all unique situations first, then repeat from the start if needed
+    const sequence: Situation[] = []
+    let i = 0
+    while (sequence.length < desiredTests) {
+      sequence.push(shuffled[i % shuffled.length])
+      i++
+    }
+
+    setTestSituations(sequence)
   }
 
   const handleBackToSelection = () => {
@@ -97,6 +122,7 @@ export default function AchievementTestPage() {
     setCurrentTestIndex(0)
     setResults([])
     setCompleted(false)
+    setTestSituations([])
     fetchAchievementTests() // Refresh the list
   }
 
@@ -254,15 +280,7 @@ export default function AchievementTestPage() {
 
   const currentGrammar = selectedGrammarProgress
   const situations = currentGrammar?.grammarPoint.situations || []
-  
-  // Select a situation for each test (cycle through)
-  const getSituationForTest = (testIndex: number) => {
-    if (situations.length === 0) return null
-    // Use modulo to cycle through situations
-    return situations[testIndex % situations.length]
-  }
-  
-  const currentSituation = getSituationForTest(currentTestIndex)
+  const currentSituation = testSituations[currentTestIndex] || null
 
   if (completed) {
     return (
@@ -325,6 +343,35 @@ export default function AchievementTestPage() {
               Submitting results...
             </p>
           )}
+          <button
+            onClick={async () => {
+              if (!user) return
+              try {
+                const response = await fetch(`/api/grammar/${currentGrammar.grammarPoint.id}/return-to-review`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ userId: user.id }),
+                })
+
+                if (!response.ok) {
+                  const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+                  throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+                }
+
+                alert('Moved back to Level Review.')
+                handleBackToSelection()
+              } catch (error) {
+                console.error('Error moving back to review:', error)
+                alert(`Error moving back to review: ${error instanceof Error ? error.message : 'Please try again.'}`)
+              }
+            }}
+            className="btn-secondary"
+            style={{ marginTop: '0.75rem', fontSize: '0.875rem', width: '100%' }}
+          >
+            ← Move Back to Level Review
+          </button>
         </div>
 
       {!currentSituation ? (

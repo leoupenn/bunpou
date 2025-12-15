@@ -199,36 +199,6 @@ export default function LearningPage() {
             <p style={{ fontSize: '1rem', lineHeight: '1.6', margin: 0, color: '#0c4a6e', paddingRight: currentGrammar.grammarPoint.referenceUrl ? '120px' : '0' }}>
               <strong>Prompt:</strong> {currentSituation.situation}
             </p>
-            {currentGrammar.grammarPoint.referenceUrl && (
-              <a
-                href={currentGrammar.grammarPoint.referenceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
-                  padding: '0.5rem 1rem',
-                  background: '#6366f1',
-                  color: 'white',
-                  borderRadius: '0.375rem',
-                  textDecoration: 'none',
-                  fontWeight: 500,
-                  fontSize: '0.875rem',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#4f46e5'
-                  e.currentTarget.style.transform = 'translateY(-2px)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#6366f1'
-                  e.currentTarget.style.transform = 'translateY(0)'
-                }}
-              >
-                📚 Docs
-              </a>
-            )}
           </div>
         )}
         {currentSituation.wordBank && (
@@ -260,39 +230,6 @@ export default function LearningPage() {
             If you feel you&apos;ve mastered this grammar point, click to move it to the achievement test.
           </p>
         </div>
-        {currentGrammar.grammarPoint.referenceUrl && (
-          <a
-            href={currentGrammar.grammarPoint.referenceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              position: 'absolute',
-              bottom: '1rem',
-              right: '1rem',
-              padding: '0.5rem 1rem',
-              background: '#8b5cf6',
-              color: 'white',
-              borderRadius: '0.375rem',
-              textDecoration: 'none',
-              fontWeight: 500,
-              fontSize: '0.875rem',
-              transition: 'all 0.2s',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#7c3aed'
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.15)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#8b5cf6'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'
-            }}
-          >
-            📚 Docs
-          </a>
-        )}
       </div>
     </div>
     </ProtectedRoute>

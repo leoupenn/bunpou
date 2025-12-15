@@ -1,12 +1,19 @@
 import OpenAI from 'openai'
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY is not set')
-}
+// Lazy initialization to avoid build-time errors
+let openaiInstance: OpenAI | null = null
 
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+function getOpenAI(): OpenAI {
+  if (!openaiInstance) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not set')
+    }
+    openaiInstance = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+  }
+  return openaiInstance
+}
 
 export interface SentenceEvaluation {
   isCorrect: boolean
@@ -40,6 +47,7 @@ Respond in JSON format:
 }`
 
   try {
+    const openai = getOpenAI()
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [

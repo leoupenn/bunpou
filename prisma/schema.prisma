@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  grammarProgress GrammarProgress[]
+  attempts       Attempt[]
+}
+
+model GrammarPoint {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  referenceUrl String?
+  group       Int
+  jlptLevel   String   @default("N5") // N5, N4, N3, N2, N1
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  situations      Situation[]
+  grammarProgress GrammarProgress[]
+  attempts        Attempt[]
+
+  @@index([jlptLevel])
+  @@index([group])
+}
+
+model Situation {
+  id            String   @id @default(cuid())
+  grammarPointId String
+  lessonNumber  Int
+  situation     String
+  wordBank      String
+  difficulty    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  grammarPoint   GrammarPoint @relation(fields: [grammarPointId], references: [id], onDelete: Cascade)
+  attempts       Attempt[]
+
+  @@unique([grammarPointId, lessonNumber])
+}
+
+model GrammarProgress {
+  id                    String   @id @default(cuid())
+  userId                String
+  grammarPointId        String
+  srsLevel              Int      @default(0) // 0 = new, 1-5 = learning, 6 = mastered
+  status                String   @default("new") // "new", "learning", "mastered", "achievement_test"
+  unlockedSituationNumber Int     @default(1) // Highest situation lessonNumber unlocked (1-based)
+  lastSituationId       String?  // Last situation used (for avoiding direct repetition in recycling)
+  nextReviewAt          DateTime?
+  lastReviewedAt        DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grammarPoint GrammarPoint @relation(fields: [grammarPointId], references: [id], onDelete: Cascade)
+
+  attempts Attempt[]
+
+  @@unique([userId, grammarPointId])
+  @@index([userId, status])
+  @@index([userId, nextReviewAt])
+}
+
+model Attempt {
+  id               String   @id @default(cuid())
+  userId           String
+  grammarPointId   String
+  situationId      String?
+  grammarProgressId String?
+  userSentence     String
+  isCorrect        Boolean
+  feedback         String?
+  hints            String?
+  corrections      String?
+  attemptType      String   @default("practice") // "practice", "review", "achievement_test"
+  createdAt        DateTime @default(now())
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grammarPoint   GrammarPoint   @relation(fields: [grammarPointId], references: [id], onDelete: Cascade)
+  situation      Situation?     @relation(fields: [situationId], references: [id], onDelete: Cascade)
+  grammarProgress GrammarProgress? @relation(fields: [grammarProgressId], references: [id], onDelete: Cascade)
+
+  @@index([userId, grammarPointId])
+  @@index([grammarProgressId])
+  @@index([situationId])
+  @@index([createdAt])
+}
+

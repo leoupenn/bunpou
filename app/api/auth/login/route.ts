@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password } = body
+    const { email, password, rememberMe } = body
 
     if (!email || !password) {
       return NextResponse.json(
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate token
-    const token = generateToken(user.id)
+    const token = generateToken(user.id, !!rememberMe)
 
     // Set cookie
     const response = NextResponse.json({
@@ -54,7 +54,9 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      // If rememberMe is true, let JWT control lifetime (cookie lives long, e.g. 30d)
+      // If false, make this a session cookie by omitting maxAge
+      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 30 } : {}),
     })
 
     return response

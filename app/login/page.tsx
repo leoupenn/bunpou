@@ -10,6 +10,7 @@ export default function LoginPage() {
   const { login } = useUser()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -24,7 +25,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       })
 
       const data = await response.json()
@@ -83,6 +84,24 @@ export default function LoginPage() {
               className="input"
               placeholder="your@email.com"
             />
+          </div>
+
+          <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#4b5563' }}>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                style={{ accentColor: '#6366f1' }}
+              />
+              Remember me
+            </label>
+            <Link
+              href="/forgot-password"
+              style={{ fontSize: '0.875rem', color: '#6366f1', fontWeight: 500 }}
+            >
+              Forgot password?
+            </Link>
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>

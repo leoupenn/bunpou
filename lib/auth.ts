@@ -18,8 +18,10 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
-export function generateToken(userId: string): string {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' })
+export function generateToken(userId: string, rememberMe: boolean): string {
+  // Shorter expiry for non-remembered sessions, longer for "remember me"
+  const expiresIn = rememberMe ? '30d' : '1d'
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn })
 }
 
 export function verifyToken(token: string): { userId: string } | null {

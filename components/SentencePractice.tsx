@@ -65,7 +65,10 @@ export default function SentencePractice({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
         console.error('API error:', errorData)
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+        const errorMessage = errorData.details 
+          ? `${errorData.error}: ${errorData.details}`
+          : errorData.error || `HTTP error! status: ${response.status}`
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()

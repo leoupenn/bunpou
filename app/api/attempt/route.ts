@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Verify the situation is unlocked
-    if (situation.lessonNumber > grammarProgress.unlockedSituationNumber) {
+    // Verify the situation is unlocked (skip for achievement_test as they can use any situation)
+    if (attemptType !== 'achievement_test' && situation.lessonNumber > grammarProgress.unlockedSituationNumber) {
       return NextResponse.json(
         { error: 'This situation is not yet unlocked. Complete previous situations first.' },
         { status: 403 }
@@ -165,10 +165,42 @@ export async function POST(request: NextRequest) {
       attempt,
       evaluation,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating attempt:', error)
+    
+    // Return more detailed error information
+    const errorMessage = error?.message || 'Failed to create attempt'
+    const errorCode = error?.code || 'UNKNOWN_ERROR'
+    
+    // Handle specific Prisma errors
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Duplicate attempt detected', details: errorMessage },
+        { status: 409 }
+      )
+    }
+    
+    if (error?.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'Invalid reference (foreign key constraint)', details: errorMessage },
+        { status: 400 }
+      )
+    }
+    
+    // Handle OpenAI API errors
+    if (error?.response?.status || error?.status) {
+      return NextResponse.json(
+        { error: 'OpenAI API error', details: errorMessage },
+        { status: 502 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to create attempt' },
+      { 
+        error: 'Failed to create attempt', 
+        details: errorMessage,
+        code: errorCode
+      },
       { status: 500 }
     )
   }

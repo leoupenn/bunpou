@@ -46,7 +46,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Complete achievement test (5 reviews, need 3 correct to master)
+// Complete achievement test (3-5 reviews, need 3 correct to master)
+// Test ends early if student gets 3 correct (pass) or 3 wrong (fail)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -59,14 +60,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!Array.isArray(results) || results.length !== 5) {
+    if (!Array.isArray(results) || results.length < 3 || results.length > 5) {
       return NextResponse.json(
-        { error: 'results must be an array of 5 boolean values' },
+        { error: 'results must be an array of 3-5 boolean values' },
         { status: 400 }
       )
     }
 
     const correctCount = results.filter((r: boolean) => r === true).length
+    const wrongCount = results.filter((r: boolean) => r === false).length
+    
+    // Validate early termination logic
+    if (results.length < 5) {
+      // Early termination should only happen with 3 correct or 3 wrong
+      if (correctCount < 3 && wrongCount < 3) {
+        return NextResponse.json(
+          { error: 'Early termination requires 3 correct (pass) or 3 wrong (fail)' },
+          { status: 400 }
+        )
+      }
+    }
+    
     const isMastered = correctCount >= 3
 
     // Calculate next review date for mastered items (1 week from now)

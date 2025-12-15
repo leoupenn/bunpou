@@ -63,13 +63,25 @@ export default function AchievementTestPage() {
     setResults(newResults)
     console.log(`Test ${currentTestIndex + 1}/5: ${isCorrect ? 'Correct' : 'Incorrect'}. Results:`, newResults)
 
-    if (currentTestIndex < 4) {
+    const correctCount = newResults.filter((r) => r).length
+    const wrongCount = newResults.filter((r) => !r).length
+
+    // Early termination: 3 correct = pass, 3 wrong = fail
+    if (correctCount >= 3) {
+      // Passed early with 3 correct
+      console.log('Passed early with 3 correct answers. Submitting results...', newResults)
+      submitAchievementTest(newResults, true)
+    } else if (wrongCount >= 3) {
+      // Failed early with 3 wrong (can't reach 3 correct anymore)
+      console.log('Failed early with 3 wrong answers. Submitting results...', newResults)
+      submitAchievementTest(newResults, false)
+    } else if (currentTestIndex < 4) {
       // Move to next test (same grammar point)
       setCurrentTestIndex(currentTestIndex + 1)
     } else {
       // Completed 5 tests, submit results
       console.log('All 5 tests completed. Submitting results...', newResults)
-      submitAchievementTest(newResults)
+      submitAchievementTest(newResults, correctCount >= 3)
     }
   }
 
@@ -88,12 +100,12 @@ export default function AchievementTestPage() {
     fetchAchievementTests() // Refresh the list
   }
 
-  const submitAchievementTest = async (finalResults: boolean[]) => {
+  const submitAchievementTest = async (finalResults: boolean[], isMastered: boolean) => {
     if (!selectedGrammarProgress || !user || submitting) return
 
     setSubmitting(true)
     const correctCount = finalResults.filter((r) => r).length
-    const isMastered = correctCount >= 3
+    const totalTests = finalResults.length
 
     try {
       console.log('Submitting achievement test:', {
@@ -101,6 +113,8 @@ export default function AchievementTestPage() {
         grammarProgressId: selectedGrammarProgress.id,
         results: finalResults,
         correctCount,
+        totalTests,
+        isMastered,
       })
 
       const response = await fetch('/api/achievement-test', {
@@ -132,7 +146,11 @@ export default function AchievementTestPage() {
         }, 3000)
       } else {
         // Not mastered, reset and try again
-        alert(`You got ${correctCount}/5 correct. Need 3/5 to master. Try again!`)
+        const earlyTermination = totalTests < 5
+        const message = earlyTermination
+          ? `You got ${correctCount}/${totalTests} correct, but had 3 wrong answers. Need 3 correct to master. Try again!`
+          : `You got ${correctCount}/5 correct. Need 3/5 to master. Try again!`
+        alert(message)
         setCurrentTestIndex(0)
         setResults([])
       }
@@ -175,7 +193,7 @@ export default function AchievementTestPage() {
           </Link>
           <h1>Achievement Test</h1>
           <p style={{ marginBottom: '1rem', color: '#666' }}>
-            Select a grammar point to take its achievement test. You need to get 3 out of 5 correct to master it.
+            Select a grammar point to take its achievement test. You need to get 3 correct to master it. The test will end early if you get 3 correct (pass) or 3 wrong (fail).
           </p>
 
           {grammarPoints.length === 0 ? (
@@ -290,12 +308,17 @@ export default function AchievementTestPage() {
         <div style={{ marginBottom: '1rem', padding: '1rem', background: '#f3f4f6', borderRadius: '0.375rem' }}>
           <p style={{ marginBottom: '0.5rem' }}>
             <strong>Grammar Point:</strong> {currentGrammar.grammarPoint.name} | <strong>Test:</strong> {currentTestIndex + 1} / 5
+            {results.length > 0 && results.length < 5 && (
+              <span style={{ marginLeft: '0.5rem', fontSize: '0.875rem', color: '#059669', fontWeight: 600 }}>
+                (Early termination possible)
+              </span>
+            )}
           </p>
           <p style={{ marginBottom: '0.5rem' }}>
-            <strong>Progress:</strong> {results.filter(r => r).length} correct out of {results.length} completed
+            <strong>Progress:</strong> {results.filter(r => r).length} correct, {results.filter(r => !r).length} wrong out of {results.length} completed
           </p>
           <p style={{ fontSize: '0.875rem', color: '#666' }}>
-            You need to get 3 out of 5 correct to master this grammar point.
+            You need to get 3 correct to master this grammar point. The test will end early if you get 3 correct (pass) or 3 wrong (fail).
           </p>
           {submitting && (
             <p style={{ marginTop: '0.5rem', color: '#059669', fontWeight: 'bold' }}>

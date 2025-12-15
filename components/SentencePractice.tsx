@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface SentencePracticeProps {
   grammarPointId: string
@@ -66,23 +66,7 @@ export default function SentencePractice({
           corrections: data.evaluation.corrections,
         })
 
-        if (data.evaluation.isCorrect) {
-          if (showFeedback && attemptType === 'achievement_test') {
-            // For achievement test, show feedback briefly then continue
-            setTimeout(() => {
-              onCorrect()
-              setSentence('')
-              setFeedback(null)
-            }, 2000)
-          } else {
-            // For practice/review, auto-advance after 2 seconds
-            setTimeout(() => {
-              onCorrect()
-              setSentence('')
-              setFeedback(null)
-            }, 2000)
-          }
-        }
+        // Don't auto-advance - user must click Continue or press Enter
       }
     } catch (error) {
       console.error('Error submitting sentence:', error)
@@ -96,12 +80,42 @@ export default function SentencePractice({
   }
 
   const handleContinue = () => {
-    if (feedback && !feedback.isCorrect && onIncorrect) {
-      onIncorrect()
+    if (feedback) {
+      setLoading(false)
       setSentence('')
       setFeedback(null)
+      
+      if (feedback.isCorrect && onCorrect) {
+        onCorrect()
+      } else if (!feedback.isCorrect && onIncorrect) {
+        onIncorrect()
+      }
     }
   }
+
+  // Handle Enter key to continue after feedback
+  useEffect(() => {
+    if (!feedback) return
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        setLoading(false)
+        setSentence('')
+        const currentFeedback = feedback
+        setFeedback(null)
+        
+        if (currentFeedback.isCorrect && onCorrect) {
+          onCorrect()
+        } else if (!currentFeedback.isCorrect && onIncorrect) {
+          onIncorrect()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [feedback, onCorrect, onIncorrect])
 
   return (
     <div>
@@ -112,9 +126,9 @@ export default function SentencePractice({
           onChange={(e) => setSentence(e.target.value)}
           placeholder="Type your sentence in Japanese..."
           rows={4}
-          disabled={loading}
+          disabled={loading || !!feedback}
           style={{ fontSize: '1.125rem', padding: '1rem' }}
-          autoFocus
+          autoFocus={!feedback}
         />
         <button
           type="submit"
@@ -140,20 +154,17 @@ export default function SentencePractice({
               <strong>Correction:</strong> {feedback.corrections}
             </p>
           )}
-          {showFeedback && attemptType === 'achievement_test' && !feedback.isCorrect && (
-            <button
-              onClick={handleContinue}
-              className="btn-primary"
-              style={{ marginTop: '1rem' }}
-            >
-              Continue to Next Test
-            </button>
-          )}
-          {showFeedback && attemptType === 'achievement_test' && feedback.isCorrect && (
-            <p style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
-              Moving to next test...
-            </p>
-          )}
+          <button
+            onClick={handleContinue}
+            className="btn-primary"
+            style={{ marginTop: '1rem', width: '100%' }}
+            autoFocus
+          >
+            {feedback.isCorrect ? 'Continue' : attemptType === 'achievement_test' ? 'Continue to Next Test' : 'Continue'}
+          </button>
+          <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#6b7280', textAlign: 'center' }}>
+            Press Enter to continue
+          </p>
         </div>
       )}
     </div>

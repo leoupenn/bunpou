@@ -119,3 +119,13 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - `npm run start` - Start production server
 - `npm run db:studio` - Open Prisma Studio to view database
 
+## Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions with custom domain setup.
+
+Quick start:
+1. Push code to GitHub
+2. Connect to Vercel
+3. Add environment variables
+4. Deploy and configure custom domain
+

@@ -39,19 +39,6 @@ export default function ReviewPage() {
   const [loading, setLoading] = useState(true)
   const [showWordBank, setShowWordBank] = useState(false)
 
-  useEffect(() => {
-    if (user) {
-      fetchAvailableReviews()
-    }
-  }, [user])
-
-  // Fetch next situation when grammar point changes
-  useEffect(() => {
-    if (grammarPoints.length > 0 && currentIndex < grammarPoints.length && user && !loading) {
-      fetchNextSituation(grammarPoints[currentIndex].id)
-    }
-  }, [currentIndex])
-
   const fetchAvailableReviews = async () => {
     if (!user) return
     try {
@@ -86,6 +73,21 @@ export default function ReviewPage() {
       setCurrentSituation(null)
     }
   }
+
+  useEffect(() => {
+    if (user) {
+      fetchAvailableReviews()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
+
+  // Fetch next situation when grammar point changes
+  useEffect(() => {
+    if (grammarPoints.length > 0 && currentIndex < grammarPoints.length && user && !loading) {
+      fetchNextSituation(grammarPoints[currentIndex].id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex])
 
   const handleCorrect = async () => {
     const currentGrammar = grammarPoints[currentIndex]
@@ -302,7 +304,7 @@ export default function ReviewPage() {
             ✓ Mark as Mastered (Move to Achievement Test)
           </button>
           <p style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.5rem' }}>
-            If you feel you've mastered this grammar point, click to move it to the achievement test.
+            If you feel you&apos;ve mastered this grammar point, click to move it to the achievement test.
           </p>
         </div>
       </div>

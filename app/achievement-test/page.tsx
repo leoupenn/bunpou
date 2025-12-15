@@ -36,12 +36,6 @@ export default function AchievementTestPage() {
   const [completed, setCompleted] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (user) {
-    fetchAchievementTests()
-    }
-  }, [user])
-
   const fetchAchievementTests = () => {
     if (!user) return
     fetch(`/api/achievement-test?userId=${user.id}`)
@@ -55,6 +49,13 @@ export default function AchievementTestPage() {
         setLoading(false)
       })
   }
+
+  useEffect(() => {
+    if (user) {
+      fetchAchievementTests()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const handleResult = (isCorrect: boolean) => {
     const newResults = [...results, isCorrect]
@@ -237,7 +238,7 @@ export default function AchievementTestPage() {
           <div className="card">
             <div className="feedback correct">
               <h2>🎉 Congratulations!</h2>
-              <p>You've mastered {currentGrammar?.grammarPoint.name}!</p>
+              <p>You&apos;ve mastered {currentGrammar?.grammarPoint.name}!</p>
               <p style={{ marginTop: '0.5rem' }}>
                 This grammar point has been set to SRS level 6 (mastered).
               </p>
@@ -296,11 +297,12 @@ export default function AchievementTestPage() {
           )}
 
           <SentencePractice
+            key={`${currentGrammar.grammarPoint.id}-${currentTestIndex}`}
             grammarPointId={currentGrammar.grammarPoint.id}
             situationId={currentSituation.id}
             grammarPointName={currentGrammar.grammarPoint.name}
             situation={currentSituation.situation}
-              userId={user.id}
+            userId={user.id}
             onCorrect={() => handleResult(true)}
             onIncorrect={() => handleResult(false)}
             attemptType="achievement_test"

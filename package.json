@@ -18,6 +18,7 @@
     "migrate:export": "tsx prisma/migrate-to-vercel.ts export"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.7.1",
     "bcryptjs": "^3.0.3",
     "date-fns": "^2.30.0",

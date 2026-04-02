@@ -22,17 +22,13 @@ export interface SentenceEvaluation {
   corrections?: string
 }
 
-export async function evaluateSentence(
+/** Shared prompt body for OpenAI and Gemini evaluators. */
+export function buildEvaluationPrompt(
   grammarPoint: string,
   situation: string,
   userSentence: string
-): Promise<SentenceEvaluation> {
-  // Check API key before making request
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is not set in environment variables')
-  }
-
-  const prompt = `You are a Japanese grammar teacher evaluating a student's sentence.
+): string {
+  return `You are a Japanese grammar teacher evaluating a student's sentence.
 
 Grammar Point: ${grammarPoint}
 Situation: ${situation}
@@ -50,6 +46,18 @@ Respond in JSON format:
   "hints": "helpful hints if incorrect (optional)",
   "corrections": "corrected version if incorrect (optional)"
 }`
+}
+
+export async function evaluateSentenceWithOpenAI(
+  grammarPoint: string,
+  situation: string,
+  userSentence: string
+): Promise<SentenceEvaluation> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not set in environment variables')
+  }
+
+  const prompt = buildEvaluationPrompt(grammarPoint, situation, userSentence)
 
   try {
     const openai = getOpenAI()
@@ -75,39 +83,51 @@ Respond in JSON format:
     }
 
     const evaluation = JSON.parse(content) as SentenceEvaluation
-    
-    // Validate the evaluation has required fields
+
     if (typeof evaluation.isCorrect !== 'boolean' || !evaluation.feedback) {
       throw new Error('Invalid evaluation format from OpenAI')
     }
-    
+
     return evaluation
-  } catch (error: any) {
-    console.error('Error evaluating sentence:', error)
-    
-    // Preserve original error message
+  } catch (error: unknown) {
+    console.error('Error evaluating sentence (OpenAI):', error)
+
     let errorMessage = 'Failed to evaluate sentence'
-    
-    if (error?.message) {
+
+    if (error instanceof Error) {
       errorMessage = error.message
-    } else if (error?.error?.message) {
-      errorMessage = error.error.message
+    } else if (
+      typeof error === 'object' &&
+      error !== null &&
+      'error' in error &&
+      typeof (error as { error?: { message?: string } }).error?.message === 'string'
+    ) {
+      errorMessage = (error as { error: { message: string } }).error.message
     }
-    
-    // Handle specific OpenAI API errors
-    if (error?.status === 401) {
+
+    const status =
+      typeof error === 'object' && error !== null && 'status' in error
+        ? (error as { status?: number }).status
+        : undefined
+
+    if (status === 401) {
       errorMessage = 'OpenAI API key is invalid or missing'
-    } else if (error?.status === 429) {
+    } else if (status === 429) {
       errorMessage = 'OpenAI API rate limit exceeded. Please try again later.'
-    } else if (error?.status === 500 || error?.status === 503) {
+    } else if (status === 500 || status === 503) {
       errorMessage = 'OpenAI API is temporarily unavailable. Please try again later.'
-    } else if (error?.code === 'ENOTFOUND' || error?.code === 'ECONNREFUSED') {
+    } else if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      ((error as { code?: string }).code === 'ENOTFOUND' ||
+        (error as { code?: string }).code === 'ECONNREFUSED')
+    ) {
       errorMessage = 'Cannot connect to OpenAI API. Check your internet connection.'
     } else if (error instanceof SyntaxError) {
       errorMessage = 'Failed to parse OpenAI response. Please try again.'
     }
-    
+
     throw new Error(errorMessage)
   }
 }
-

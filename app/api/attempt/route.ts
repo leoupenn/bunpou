@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { evaluateSentence } from '@/lib/openai'
+import { evaluateSentence } from '@/lib/sentence-evaluation'
 import { calculateNextReview } from '@/lib/srs'
 
 export const dynamic = 'force-dynamic'
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Evaluate sentence using OpenAI
+    // Evaluate sentence (OpenAI primary, Gemini fallback when configured)
     let evaluation: any
     try {
       evaluation = await evaluateSentence(
@@ -96,9 +96,8 @@ export async function POST(request: NextRequest) {
         userSentence
       )
     } catch (error: any) {
-      console.error('OpenAI evaluation error:', error)
-      // Re-throw with more context
-      throw new Error(`OpenAI evaluation failed: ${error.message || 'Unknown error'}`)
+      console.error('Sentence evaluation error:', error)
+      throw new Error(`Sentence evaluation failed: ${error.message || 'Unknown error'}`)
     }
 
     // Create attempt record
@@ -194,10 +193,10 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Handle OpenAI API errors
+    // Handle upstream AI provider errors
     if (error?.response?.status || error?.status) {
       return NextResponse.json(
-        { error: 'OpenAI API error', details: errorMessage },
+        { error: 'AI provider error', details: errorMessage },
         { status: 502 }
       )
     }

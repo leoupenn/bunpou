@@ -25,6 +25,10 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.l
+
+# local copy of another project (do not commit)
+/Heritage/
 
 # vercel
 .vercel

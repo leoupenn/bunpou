@@ -31,10 +31,18 @@ export default function SignupPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password, name }),
       })
 
-      const data = await response.json()
+      let data: { error?: string; details?: string; user?: { id: string; email: string; name: string | null } }
+      try {
+        data = await response.json()
+      } catch {
+        setError(`Server error (${response.status}). Try again or check Vercel function logs.`)
+        setLoading(false)
+        return
+      }
 
       if (!response.ok) {
         const errorMsg = data.error || 'Failed to create account'
@@ -47,10 +55,14 @@ export default function SignupPage() {
         return
       }
 
-      // Update user context
-      login(data.user)
+      if (!data.user) {
+        setError('Invalid response from server. Please try again.')
+        setLoading(false)
+        return
+      }
 
-      // Redirect to home
+      login(data.user)
+      setLoading(false)
       router.push('/')
       router.refresh()
     } catch (err) {

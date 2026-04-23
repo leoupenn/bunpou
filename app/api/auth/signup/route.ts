@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword, generateToken } from '@/lib/auth'
-import { addHours } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
 
@@ -108,23 +107,49 @@ export async function POST(request: NextRequest) {
     })
 
     return response
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error signing up:', error)
-    
-    // Handle specific Prisma errors
-    if (error?.code === 'P2002') {
+
+    const code =
+      error && typeof error === 'object' && 'code' in error
+        ? String((error as { code?: string }).code)
+        : undefined
+
+    if (code === 'P2002') {
       return NextResponse.json(
         { error: 'User with this email already exists' },
         { status: 400 }
       )
     }
-    
-    // Return more detailed error message
-    const errorMessage = error?.message || 'Failed to create account'
+
+    if (code === 'P2021') {
+      return NextResponse.json(
+        {
+          error:
+            'Database tables are missing. Run `npx prisma db push` against this project’s DATABASE_URL, then redeploy if needed.',
+        },
+        { status: 503 }
+      )
+    }
+
+    if (code === 'P1001' || code === 'P1000') {
+      return NextResponse.json(
+        {
+          error:
+            'Cannot reach the database. Check DATABASE_URL on Vercel (SSL, host, and that the DB allows connections from Vercel).',
+        },
+        { status: 503 }
+      )
+    }
+
+    const message =
+      error instanceof Error ? error.message : 'Failed to create account'
+
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? String(error) : undefined 
+      {
+        error: message,
+        details:
+          process.env.NODE_ENV === 'development' ? String(error) : undefined,
       },
       { status: 500 }
     )

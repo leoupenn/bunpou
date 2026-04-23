@@ -198,7 +198,7 @@ async function main() {
       arr.push(gp.name)
       normalized.set(key, arr)
     }
-    const dupes = [...normalized.entries()].filter(([, names]) => names.length > 1)
+    const dupes = Array.from(normalized.entries()).filter(([, names]) => names.length > 1)
     if (dupes.length > 0) {
       console.log('')
       console.log(

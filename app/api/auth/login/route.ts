@@ -50,14 +50,16 @@ export async function POST(request: NextRequest) {
       token,
     })
 
+    // Always set maxAge so the cookie survives refresh (session-only cookies are flaky).
+    // Match JWT: 30d vs 1d — see lib/auth generateToken.
+    const maxAgeSeconds = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24
+
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      // If rememberMe is true, let JWT control lifetime (cookie lives long, e.g. 30d)
-      // If false, make this a session cookie by omitting maxAge
-      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 30 } : {}),
+      maxAge: maxAgeSeconds,
     })
 
     return response

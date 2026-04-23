@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromToken } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     // Get token from cookie
@@ -14,7 +16,13 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       const response = NextResponse.json({ user: null }, { status: 200 })
-      response.cookies.delete('auth-token')
+      response.cookies.set('auth-token', '', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 0,
+      })
       return response
     }
 

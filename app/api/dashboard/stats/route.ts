@@ -57,11 +57,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
-    const demoActive = await resolveDemoSliceForUser(userId)
+    const slice = await resolveDemoSliceForUser(userId)
 
     // Get all grammar points with their progress
     const allGrammarPoints = await prisma.grammarPoint.findMany({
-      where: grammarPointWhere({}, demoActive),
+      where: grammarPointWhere({}, slice),
       include: {
         grammarProgress: {
           where: { userId },
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
           userId,
           OR: [{ status: 'mastered' }, { srsLevel: 6 }],
         },
-        demoActive
+        slice
       ),
       orderBy: {
         updatedAt: 'asc',

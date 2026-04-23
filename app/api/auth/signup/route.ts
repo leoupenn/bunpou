@@ -48,10 +48,9 @@ export async function POST(request: NextRequest) {
     // DEMO_ONLY_GRAMMAR_NAME applies to this new user (e.g. allowlisted email).
     // Users start with first situation (lessonNumber 1) unlocked for each grammar point
     try {
-      const demoActive = await resolveDemoSliceForUser(user.id)
-      const initialWhere = demoActive
-        ? grammarPointWhere({}, demoActive)
-        : grammarPointWhere({ group: 1 }, demoActive)
+      const slice = await resolveDemoSliceForUser(user.id)
+      const initialWhere =
+        slice !== false ? grammarPointWhere({}, slice) : grammarPointWhere({ group: 1 }, slice)
 
       const group1GrammarPoints = await prisma.grammarPoint.findMany({
         where: initialWhere,

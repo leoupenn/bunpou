@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const demoActive = await resolveDemoSliceForUser(userId)
+    const slice = await resolveDemoSliceForUser(userId)
     const now = new Date()
     // Set nextReviewAt to 1 second ago to make reviews immediately available
     const pastTime = new Date(now.getTime() - 1000)
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
             gt: now, // Only update items with future review times
           },
         },
-        demoActive
+        slice
       ),
       data: {
         nextReviewAt: pastTime,

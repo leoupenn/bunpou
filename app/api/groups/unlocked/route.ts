@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
-    const demoActive = await resolveDemoSliceForUser(userId)
+    const slice = await resolveDemoSliceForUser(userId)
 
     // Get all unique groups from grammar points
     const allGroups = await prisma.grammarPoint.findMany({
-      where: grammarPointWhere({}, demoActive),
+      where: grammarPointWhere({}, slice),
       select: {
         group: true,
       },
@@ -35,13 +35,13 @@ export async function GET(request: NextRequest) {
     )
 
     // Get unlocked groups
-    const unlockedGroups = await getUnlockedGroups(userId, demoActive)
+    const unlockedGroups = await getUnlockedGroups(userId, slice)
 
     // Get progress for each group (both locked and unlocked)
     const groupProgressData = await Promise.all(
       uniqueGroups.map(async (group) => {
-        const progress = await getGroupProgress(userId, group, demoActive)
-        const isUnlocked = await canAccessGroup(userId, group, demoActive)
+        const progress = await getGroupProgress(userId, group, slice)
+        const isUnlocked = await canAccessGroup(userId, group, slice)
         return {
           group,
           ...progress,

@@ -1,4 +1,5 @@
 import { prisma } from './prisma'
+import type { DemoSliceFlag } from './demo-mode'
 import { grammarPointWhere } from './demo-mode'
 
 /**
@@ -30,7 +31,7 @@ export function getRequiredMasteryCount(totalCount: number): number {
 export async function canAccessGroup(
   userId: string,
   targetGroup: number,
-  demoActiveForUser: boolean
+  slice: DemoSliceFlag
 ): Promise<boolean> {
   // Group 1 is always accessible
   if (targetGroup === 1) {
@@ -46,7 +47,7 @@ export async function canAccessGroup(
       {
         group: previousGroup,
       },
-      demoActiveForUser
+      slice
     ),
     select: {
       id: true,
@@ -84,11 +85,11 @@ export async function canAccessGroup(
  */
 export async function getUnlockedGroups(
   userId: string,
-  demoActiveForUser: boolean
+  slice: DemoSliceFlag
 ): Promise<number[]> {
   // Get all unique groups from grammar points
   const allGroups = await prisma.grammarPoint.findMany({
-    where: grammarPointWhere({}, demoActiveForUser),
+    where: grammarPointWhere({}, slice),
     select: {
       group: true,
     },
@@ -106,7 +107,7 @@ export async function getUnlockedGroups(
 
   // Check each group sequentially (groups must be unlocked in order)
   for (const group of uniqueGroups) {
-    const canAccess = await canAccessGroup(userId, group, demoActiveForUser)
+    const canAccess = await canAccessGroup(userId, group, slice)
     if (canAccess) {
       unlockedGroups.push(group)
     } else {
@@ -124,7 +125,7 @@ export async function getUnlockedGroups(
 export async function getGroupProgress(
   userId: string,
   group: number,
-  demoActiveForUser: boolean
+  slice: DemoSliceFlag
 ): Promise<{
   total: number
   mastered: number
@@ -140,7 +141,7 @@ export async function getGroupProgress(
   }>
 }> {
   const grammarPoints = await prisma.grammarPoint.findMany({
-    where: grammarPointWhere({ group }, demoActiveForUser),
+    where: grammarPointWhere({ group }, slice),
     select: { id: true, name: true },
   })
 
@@ -182,7 +183,7 @@ export async function getGroupProgress(
   })
 
   const required = getRequiredMasteryCount(total)
-  const unlocked = await canAccessGroup(userId, group + 1, demoActiveForUser) // Check if next group is unlocked
+  const unlocked = await canAccessGroup(userId, group + 1, slice) // Check if next group is unlocked
   const progress = total > 0 ? (mastered / total) * 100 : 0
 
   return {

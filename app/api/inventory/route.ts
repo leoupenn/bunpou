@@ -15,11 +15,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
-    const demoActive = await resolveDemoSliceForUser(userId)
+    const slice = await resolveDemoSliceForUser(userId)
 
     // Get all grammar points (including locked ones for preview)
     const allGrammarPoints = await prisma.grammarPoint.findMany({
-      where: grammarPointWhere({}, demoActive),
+      where: grammarPointWhere({}, slice),
       include: {
         situations: {
           orderBy: {
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Get unlocked groups to determine which grammar points are locked
-    const unlockedGroups = await getUnlockedGroups(userId, demoActive)
+    const unlockedGroups = await getUnlockedGroups(userId, slice)
     const unlockedGroupsSet = new Set(unlockedGroups)
 
     // Format the response to include progress info and lock status

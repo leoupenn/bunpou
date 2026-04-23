@@ -29,12 +29,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
-    const demoActive = await resolveDemoSliceForUser(userId)
+    const slice = await resolveDemoSliceForUser(userId)
 
     // If status is 'new', return grammar points in unlocked groups that are still "new":
     // no progress row yet, OR progress.status === 'new' (signup creates rows; old logic hid them).
     if (status === 'new') {
-      const unlockedGroups = await getUnlockedGroups(userId, demoActive)
+      const unlockedGroups = await getUnlockedGroups(userId, slice)
 
       if (unlockedGroups.length === 0) {
         return NextResponse.json([])
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
               in: unlockedGroups,
             },
           },
-          demoActive
+          slice
         ),
         include: {
           situations: {
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
     }
 
     const grammarProgress = await prisma.grammarProgress.findMany({
-      where: grammarProgressWhere(where, demoActive),
+      where: grammarProgressWhere(where, slice),
       include: {
         grammarPoint: {
           include: {

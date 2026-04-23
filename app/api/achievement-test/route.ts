@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
-    const demoActive = await resolveDemoSliceForUser(userId)
+    const slice = await resolveDemoSliceForUser(userId)
 
     const grammarProgress = await prisma.grammarProgress.findMany({
       where: grammarProgressWhere(
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
           userId,
           status: 'achievement_test',
         },
-        demoActive
+        slice
       ),
       include: {
         grammarPoint: {

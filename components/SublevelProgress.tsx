@@ -33,19 +33,37 @@ interface UnlockedGroupsData {
 export default function SublevelProgress({ userId }: SublevelProgressProps) {
   const [data, setData] = useState<UnlockedGroupsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    fetch(`/api/groups/unlocked?userId=${userId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setData(data)
-        setLoading(false)
+    setFetchError(null)
+    setLoading(true)
+    fetch(`/api/groups/unlocked?userId=${userId}`, { credentials: 'include' })
+      .then(async (res) => {
+        const payload = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          setData(null)
+          setFetchError(
+            typeof payload.error === 'string'
+              ? payload.error
+              : `Could not load sublevels (${res.status})`
+          )
+          return
+        }
+        if (!Array.isArray(payload.groupProgress)) {
+          setData(null)
+          setFetchError('Unexpected response from server')
+          return
+        }
+        setData(payload as UnlockedGroupsData)
       })
       .catch((err) => {
         console.error('Error fetching group progress:', err)
-        setLoading(false)
+        setData(null)
+        setFetchError('Network error while loading sublevels')
       })
+      .finally(() => setLoading(false))
   }, [userId])
 
   const toggleGroup = (group: number) => {
@@ -71,13 +89,34 @@ export default function SublevelProgress({ userId }: SublevelProgressProps) {
     )
   }
 
+  if (fetchError) {
+    return (
+      <div className="card">
+        <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 'bold' }}>
+          Sublevel Progress
+        </h2>
+        <p style={{ color: '#991b1b' }}>{fetchError}</p>
+      </div>
+    )
+  }
+
   if (!data || !data.groupProgress || data.groupProgress.length === 0) {
     return (
       <div className="card">
         <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 'bold' }}>
           Sublevel Progress
         </h2>
-        <p>No data available</p>
+        <p style={{ marginBottom: '0.75rem', color: '#4b5563' }}>
+          No sublevels appear because this database has no grammar curriculum yet (no grammar
+          points / groups).
+        </p>
+        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+          From your machine, against the same <code style={{ fontSize: '0.8rem' }}>DATABASE_URL</code>{' '}
+          as production: run <code style={{ fontSize: '0.8rem' }}>npm run seed</code>,{' '}
+          <code style={{ fontSize: '0.8rem' }}>npm run import-csv</code>, or your usual import so{' '}
+          <code style={{ fontSize: '0.8rem' }}>GrammarPoint</code> and <code style={{ fontSize: '0.8rem' }}>Situation</code>{' '}
+          rows exist—then refresh this page.
+        </p>
       </div>
     )
   }

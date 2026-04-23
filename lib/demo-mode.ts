@@ -100,7 +100,14 @@ export async function resolveDemoSliceForUser(userId: string): Promise<DemoSlice
 
   const mapped = userEmail ? emailGrammar.get(userEmail) : undefined
   const name = mapped ?? globalName
-  if (!name) return false
+  if (!name) {
+    // Allowlisted but no grammar to filter on → slice is off and this user sees the full catalog.
+    console.warn(
+      '[demo-mode] User is on DEMO_SLICE_* allowlist but no grammar name resolved. ' +
+        'Set DEMO_ONLY_GRAMMAR_NAME and/or DEMO_SLICE_EMAIL_GRAMMAR_MAP for their email.'
+    )
+    return false
+  }
 
   return { grammarName: name }
 }

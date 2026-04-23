@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUnlockedGroups } from '@/lib/group-progression'
+import {
+  grammarPointWhere,
+  grammarProgressWhere,
+  resolveDemoSliceForUser,
+} from '@/lib/demo-mode'
 import type { Situation } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
@@ -24,21 +29,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
+    const demoActive = await resolveDemoSliceForUser(userId)
+
     // If status is 'new', return grammar points in unlocked groups that are still "new":
     // no progress row yet, OR progress.status === 'new' (signup creates rows; old logic hid them).
     if (status === 'new') {
-      const unlockedGroups = await getUnlockedGroups(userId)
+      const unlockedGroups = await getUnlockedGroups(userId, demoActive)
 
       if (unlockedGroups.length === 0) {
         return NextResponse.json([])
       }
 
       const unlockedGrammarPoints = await prisma.grammarPoint.findMany({
-        where: {
-          group: {
-            in: unlockedGroups,
+        where: grammarPointWhere(
+          {
+            group: {
+              in: unlockedGroups,
+            },
           },
-        },
+          demoActive
+        ),
         include: {
           situations: {
             orderBy: {
@@ -128,7 +138,7 @@ export async function GET(request: NextRequest) {
     }
 
     const grammarProgress = await prisma.grammarProgress.findMany({
-      where,
+      where: grammarProgressWhere(where, demoActive),
       include: {
         grammarPoint: {
           include: {

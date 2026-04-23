@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { grammarProgressWhere, resolveDemoSliceForUser } from '@/lib/demo-mode'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,18 +13,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
+    const demoActive = await resolveDemoSliceForUser(userId)
     const now = new Date()
 
     const grammarProgress = await prisma.grammarProgress.findMany({
-      where: {
-        userId,
-        srsLevel: 6, // Only level 6 (mastered) items
-        status: 'mastered', // Ensure status is also mastered
-        OR: [
-          { nextReviewAt: { lte: now } },
-          { nextReviewAt: null },
-        ],
-      },
+      where: grammarProgressWhere(
+        {
+          userId,
+          srsLevel: 6, // Only level 6 (mastered) items
+          status: 'mastered', // Ensure status is also mastered
+          OR: [
+            { nextReviewAt: { lte: now } },
+            { nextReviewAt: null },
+          ],
+        },
+        demoActive
+      ),
       include: {
         grammarPoint: {
           include: {

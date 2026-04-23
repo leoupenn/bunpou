@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import {
+  grammarPointWhere,
+  grammarProgressWhere,
+  resolveDemoSliceForUser,
+} from '@/lib/demo-mode'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,8 +57,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
+    const demoActive = await resolveDemoSliceForUser(userId)
+
     // Get all grammar points with their progress
     const allGrammarPoints = await prisma.grammarPoint.findMany({
+      where: grammarPointWhere({}, demoActive),
       include: {
         grammarProgress: {
           where: { userId },
@@ -135,10 +143,13 @@ export async function GET(request: NextRequest) {
 
     // Calculate learning velocity from mastered grammar points
     const masteredProgress = await prisma.grammarProgress.findMany({
-      where: {
-        userId,
-        OR: [{ status: 'mastered' }, { srsLevel: 6 }],
-      },
+      where: grammarProgressWhere(
+        {
+          userId,
+          OR: [{ status: 'mastered' }, { srsLevel: 6 }],
+        },
+        demoActive
+      ),
       orderBy: {
         updatedAt: 'asc',
       },

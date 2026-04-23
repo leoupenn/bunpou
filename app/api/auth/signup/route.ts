@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hashPassword, generateToken } from '@/lib/auth'
+import { grammarPointWhere, resolveDemoSliceForUser } from '@/lib/demo-mode'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,13 +44,17 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Initialize user with group 1 grammar points only (if they exist)
+    // Initialize grammar progress: group 1 by default, or the full demo slice when
+    // DEMO_ONLY_GRAMMAR_NAME applies to this new user (e.g. allowlisted email).
     // Users start with first situation (lessonNumber 1) unlocked for each grammar point
     try {
+      const demoActive = await resolveDemoSliceForUser(user.id)
+      const initialWhere = demoActive
+        ? grammarPointWhere({}, demoActive)
+        : grammarPointWhere({ group: 1 }, demoActive)
+
       const group1GrammarPoints = await prisma.grammarPoint.findMany({
-        where: {
-          group: 1, // Only group 1 (first sublevel)
-        },
+        where: initialWhere,
         orderBy: {
           name: 'asc',
         },

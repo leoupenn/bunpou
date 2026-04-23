@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUnlockedGroups, getGroupProgress, canAccessGroup } from '@/lib/group-progression'
 import { prisma } from '@/lib/prisma'
+import { grammarPointWhere, resolveDemoSliceForUser } from '@/lib/demo-mode'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,8 +16,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
+    const demoActive = await resolveDemoSliceForUser(userId)
+
     // Get all unique groups from grammar points
     const allGroups = await prisma.grammarPoint.findMany({
+      where: grammarPointWhere({}, demoActive),
       select: {
         group: true,
       },
@@ -31,13 +35,13 @@ export async function GET(request: NextRequest) {
     )
 
     // Get unlocked groups
-    const unlockedGroups = await getUnlockedGroups(userId)
+    const unlockedGroups = await getUnlockedGroups(userId, demoActive)
 
     // Get progress for each group (both locked and unlocked)
     const groupProgressData = await Promise.all(
       uniqueGroups.map(async (group) => {
-        const progress = await getGroupProgress(userId, group)
-        const isUnlocked = await canAccessGroup(userId, group)
+        const progress = await getGroupProgress(userId, group, demoActive)
+        const isUnlocked = await canAccessGroup(userId, group, demoActive)
         return {
           group,
           ...progress,

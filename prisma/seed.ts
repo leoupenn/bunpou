@@ -70,6 +70,23 @@ async function main() {
       },
     })
 
+    // Learn / attempts require at least one Situation per grammar point (lesson 1).
+    const hasLesson1 = await prisma.situation.findFirst({
+      where: { grammarPointId: grammarPoint.id, lessonNumber: 1 },
+    })
+    if (!hasLesson1) {
+      await prisma.situation.create({
+        data: {
+          grammarPointId: grammarPoint.id,
+          lessonNumber: 1,
+          situation: `Practice using 「${grammarPoint.name}」 in a natural Japanese sentence for this pattern.`,
+          wordBank: `${grammarPoint.name}: pattern`,
+          difficulty: 1,
+        },
+      })
+      console.log(`Created situation (lesson 1) for: ${grammarPoint.name}`)
+    }
+
     // Create initial progress for user (status: new) if it doesn't exist
     const existingProgress = await prisma.grammarProgress.findUnique({
       where: {

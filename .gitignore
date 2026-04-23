@@ -26,6 +26,8 @@ yarn-error.log*
 .env*.local
 .env
 .env.l
+.env.railway
+.env.live
 
 # local copy of another project (do not commit)
 /Heritage/

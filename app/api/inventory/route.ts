@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUnlockedGroups } from '@/lib/group-progression'
+import { grammarPointWhere, resolveDemoSliceForUser } from '@/lib/demo-mode'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,8 +15,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
+    const demoActive = await resolveDemoSliceForUser(userId)
+
     // Get all grammar points (including locked ones for preview)
     const allGrammarPoints = await prisma.grammarPoint.findMany({
+      where: grammarPointWhere({}, demoActive),
       include: {
         situations: {
           orderBy: {
@@ -36,7 +40,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Get unlocked groups to determine which grammar points are locked
-    const unlockedGroups = await getUnlockedGroups(userId)
+    const unlockedGroups = await getUnlockedGroups(userId, demoActive)
     const unlockedGroupsSet = new Set(unlockedGroups)
 
     // Format the response to include progress info and lock status

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { grammarProgressWhere, resolveDemoSliceForUser } from '@/lib/demo-mode'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,18 +17,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const demoActive = await resolveDemoSliceForUser(userId)
     const now = new Date()
     // Set nextReviewAt to 1 second ago to make reviews immediately available
     const pastTime = new Date(now.getTime() - 1000)
 
     // Update all grammar progress items with future nextReviewAt
     const result = await prisma.grammarProgress.updateMany({
-      where: {
-        userId,
-        nextReviewAt: {
-          gt: now, // Only update items with future review times
+      where: grammarProgressWhere(
+        {
+          userId,
+          nextReviewAt: {
+            gt: now, // Only update items with future review times
+          },
         },
-      },
+        demoActive
+      ),
       data: {
         nextReviewAt: pastTime,
       },

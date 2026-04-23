@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { grammarProgressWhere, resolveDemoSliceForUser } from '@/lib/demo-mode'
 import { addDays, startOfDay, endOfDay, format, isSameDay } from 'date-fns'
 
 export const dynamic = 'force-dynamic'
@@ -13,20 +14,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
+    const demoActive = await resolveDemoSliceForUser(userId)
     const now = new Date()
     const weekFromNow = addDays(now, 7)
 
     // Get regular reviews (levels 0-5)
     const grammarProgress = await prisma.grammarProgress.findMany({
-      where: {
-        userId,
-        status: {
-          in: ['learning', 'new'],
+      where: grammarProgressWhere(
+        {
+          userId,
+          status: {
+            in: ['learning', 'new'],
+          },
+          nextReviewAt: {
+            not: null,
+          },
         },
-        nextReviewAt: {
-          not: null,
-        },
-      },
+        demoActive
+      ),
       include: {
         grammarPoint: true,
       },
@@ -34,14 +39,17 @@ export async function GET(request: NextRequest) {
 
     // Get master reviews (level 6)
     const masterProgress = await prisma.grammarProgress.findMany({
-      where: {
-        userId,
-        srsLevel: 6,
-        status: 'mastered',
-        nextReviewAt: {
-          not: null,
+      where: grammarProgressWhere(
+        {
+          userId,
+          srsLevel: 6,
+          status: 'mastered',
+          nextReviewAt: {
+            not: null,
+          },
         },
-      },
+        demoActive
+      ),
       include: {
         grammarPoint: true,
       },

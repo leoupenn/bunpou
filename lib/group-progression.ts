@@ -1,4 +1,5 @@
 import { prisma } from './prisma'
+import { grammarPointWhere } from './demo-mode'
 
 /**
  * Calculate the required number of mastered grammar points to unlock the next group
@@ -28,7 +29,8 @@ export function getRequiredMasteryCount(totalCount: number): number {
  */
 export async function canAccessGroup(
   userId: string,
-  targetGroup: number
+  targetGroup: number,
+  demoActiveForUser: boolean
 ): Promise<boolean> {
   // Group 1 is always accessible
   if (targetGroup === 1) {
@@ -40,9 +42,12 @@ export async function canAccessGroup(
 
   // Get all grammar points in the previous group
   const previousGroupGrammarPoints = await prisma.grammarPoint.findMany({
-    where: {
-      group: previousGroup,
-    },
+    where: grammarPointWhere(
+      {
+        group: previousGroup,
+      },
+      demoActiveForUser
+    ),
     select: {
       id: true,
     },
@@ -77,9 +82,13 @@ export async function canAccessGroup(
 /**
  * Get all unlocked groups for a user
  */
-export async function getUnlockedGroups(userId: string): Promise<number[]> {
+export async function getUnlockedGroups(
+  userId: string,
+  demoActiveForUser: boolean
+): Promise<number[]> {
   // Get all unique groups from grammar points
   const allGroups = await prisma.grammarPoint.findMany({
+    where: grammarPointWhere({}, demoActiveForUser),
     select: {
       group: true,
     },
@@ -97,7 +106,7 @@ export async function getUnlockedGroups(userId: string): Promise<number[]> {
 
   // Check each group sequentially (groups must be unlocked in order)
   for (const group of uniqueGroups) {
-    const canAccess = await canAccessGroup(userId, group)
+    const canAccess = await canAccessGroup(userId, group, demoActiveForUser)
     if (canAccess) {
       unlockedGroups.push(group)
     } else {
@@ -114,7 +123,8 @@ export async function getUnlockedGroups(userId: string): Promise<number[]> {
  */
 export async function getGroupProgress(
   userId: string,
-  group: number
+  group: number,
+  demoActiveForUser: boolean
 ): Promise<{
   total: number
   mastered: number
@@ -130,7 +140,7 @@ export async function getGroupProgress(
   }>
 }> {
   const grammarPoints = await prisma.grammarPoint.findMany({
-    where: { group },
+    where: grammarPointWhere({ group }, demoActiveForUser),
     select: { id: true, name: true },
   })
 
@@ -172,7 +182,7 @@ export async function getGroupProgress(
   })
 
   const required = getRequiredMasteryCount(total)
-  const unlocked = await canAccessGroup(userId, group + 1) // Check if next group is unlocked
+  const unlocked = await canAccessGroup(userId, group + 1, demoActiveForUser) // Check if next group is unlocked
   const progress = total > 0 ? (mastered / total) * 100 : 0
 
   return {

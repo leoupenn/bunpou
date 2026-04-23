@@ -2,16 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import * as dotenv from 'dotenv'
 import * as fs from 'fs'
 import * as path from 'path'
-
-const WAVE_CHARS = ['〜', '～']
-
-function stripLeadingWave(name: string): string {
-  let s = name
-  while (s.length > 0 && WAVE_CHARS.includes(s[0])) {
-    s = s.slice(1)
-  }
-  return s.trim()
-}
+import { findGrammarPointBySheetName, stripLeadingWave } from './grammar-point-resolve'
 
 const databaseUrlFromShell = process.env.DATABASE_URL
 dotenv.config()
@@ -104,37 +95,6 @@ function parseCSV(content: string): CSVRow[] {
   return rows
 }
 
-/**
- * Match CSV grammar name to an existing row (e.g. CSV `てください` ↔ DB `〜てください`).
- * Does not rename the row; situations attach to the matched id.
- */
-async function findGrammarPointForCsvName(csvName: string) {
-  const exact = await prisma.grammarPoint.findUnique({
-    where: { name: csvName },
-  })
-  if (exact) return exact
-
-  const candidates: string[] = []
-  if (!WAVE_CHARS.includes(csvName[0])) {
-    candidates.push(`〜${csvName}`, `～${csvName}`)
-  }
-  const stripped = stripLeadingWave(csvName)
-  if (stripped && stripped !== csvName) {
-    candidates.push(stripped)
-  }
-  for (const c of candidates) {
-    const g = await prisma.grammarPoint.findUnique({ where: { name: c } })
-    if (g) return g
-  }
-
-  const key = stripLeadingWave(csvName)
-  if (!key) return null
-  const all = await prisma.grammarPoint.findMany({
-    select: { id: true, name: true, description: true, group: true, jlptLevel: true },
-  })
-  return all.find((g) => stripLeadingWave(g.name) === key) ?? null
-}
-
 function grammarNameFilterSet(): Set<string> | null {
   const raw = process.env.GRAMMAR_NAME_FILTER?.trim()
   if (!raw) return null
@@ -206,7 +166,7 @@ async function main() {
     try {
       const group = situations[0].group
 
-      let grammarPoint = await findGrammarPointForCsvName(grammarPointName)
+      let grammarPoint = await findGrammarPointBySheetName(prisma, grammarPointName)
 
       if (grammarPoint) {
         // Do not touch referenceUrl — CSV has no doc column; clearing it removed

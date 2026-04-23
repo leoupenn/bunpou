@@ -1,6 +1,18 @@
 import { PrismaClient } from '@prisma/client'
+import * as dotenv from 'dotenv'
 import * as fs from 'fs'
 import * as path from 'path'
+import { findGrammarPointBySheetName } from './grammar-point-resolve'
+
+const databaseUrlFromShell = process.env.DATABASE_URL
+dotenv.config()
+const localEnvPath = path.join(process.cwd(), '.env.local')
+if (fs.existsSync(localEnvPath)) {
+  dotenv.config({ path: localEnvPath, override: true })
+}
+if (databaseUrlFromShell) {
+  process.env.DATABASE_URL = databaseUrlFromShell
+}
 
 const prisma = new PrismaClient()
 
@@ -36,7 +48,6 @@ function parseCSV(content: string): CSVRow[] {
   const lines = content.split('\n').filter((line) => line.trim())
   const rows: CSVRow[] = []
 
-  // Skip header row
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim()
     if (!line) continue
@@ -44,14 +55,12 @@ function parseCSV(content: string): CSVRow[] {
     const fields = parseCSVLine(line)
 
     if (fields.length >= 3) {
-      // Column 1: Grammar Point (live names)
       const grammarPoint = fields[0].replace(/^"|"$/g, '').trim()
-      // Column 3: First reference URL (column 2 is outdated names, skip it)
       const referenceUrl = fields[2].replace(/^"|"$/g, '').trim()
-      // Columns 4-6: Additional URLs (optional)
-      const additionalUrls = fields.slice(3, 6)
-        .map(url => url.replace(/^"|"$/g, '').trim())
-        .filter(url => url && url.length > 0)
+      const additionalUrls = fields
+        .slice(3, 6)
+        .map((url) => url.replace(/^"|"$/g, '').trim())
+        .filter((url) => url && url.length > 0)
 
       if (grammarPoint && referenceUrl) {
         rows.push({
@@ -60,7 +69,10 @@ function parseCSV(content: string): CSVRow[] {
           additionalUrls,
         })
       } else {
-        console.warn(`Skipping row ${i + 1}: Missing grammar point or URL`, { grammarPoint, referenceUrl })
+        console.warn(`Skipping row ${i + 1}: Missing grammar point or URL`, {
+          grammarPoint,
+          referenceUrl,
+        })
       }
     } else {
       console.warn(`Skipping row ${i + 1}: Insufficient fields (${fields.length})`, fields)
@@ -71,20 +83,26 @@ function parseCSV(content: string): CSVRow[] {
 }
 
 async function main() {
-  // Default path - user can modify this or pass as argument
-  const csvPath = process.argv[2] || path.join(process.cwd(), 'reference-docs.csv')
+  const fromEnv = process.env.REFERENCE_DOCS_CSV_PATH?.trim()
+  const fromArgv = process.argv[2]?.trim()
+  const csvPath =
+    fromEnv ||
+    fromArgv ||
+    path.join(process.cwd(), 'reference-docs.csv')
 
-  console.log('Reading CSV file from:', csvPath)
+  console.log('Reading reference-docs CSV from:', csvPath)
 
   if (!fs.existsSync(csvPath)) {
     console.error(`CSV file not found at: ${csvPath}`)
-    console.error('Usage: npm run import-reference-docs <path-to-csv>')
-    console.error('Or: npx tsx prisma/import-reference-docs.ts <path-to-csv>')
-    console.error('\nCSV format expected:')
-    console.error('  Column 1: Grammar Point (live names)')
-    console.error('  Column 2: Grammar Point (outdated names) - ignored')
-    console.error('  Column 3: Reference URL (primary)')
-    console.error('  Columns 4-6: Additional URLs (optional) - only first URL is used')
+    console.error('\nUsage:')
+    console.error('  REFERENCE_DOCS_CSV_PATH=/path/to.csv npm run import-reference-docs')
+    console.error('  npm run import-reference-docs -- /path/to.csv')
+    console.error('\nUse public DATABASE_URL for production (Railway TCP proxy).')
+    console.error('\nCSV format:')
+    console.error('  Column 1: Grammar point name (should match sheet / DB; 〜 variants resolved)')
+    console.error('  Column 2: Outdated names — ignored')
+    console.error('  Column 3: Primary reference URL (https://...)')
+    console.error('  Columns 4–6: Optional extra URLs (not stored yet; logged only)')
     process.exit(1)
   }
 
@@ -98,26 +116,26 @@ async function main() {
   let errors = 0
   const notFoundList: string[] = []
 
-  // Process each row
   for (const row of rows) {
     try {
-      const grammarPoint = await prisma.grammarPoint.findUnique({
-        where: { name: row.grammarPoint },
-      })
+      const grammarPoint = await findGrammarPointBySheetName(prisma, row.grammarPoint)
 
       if (grammarPoint) {
-        // Use the first URL as the primary referenceUrl
-        // If there are additional URLs, we could store them separately in the future
         await prisma.grammarPoint.update({
           where: { id: grammarPoint.id },
           data: {
             referenceUrl: row.referenceUrl,
           },
         })
-        const additionalInfo = row.additionalUrls.length > 0 
-          ? ` (${row.additionalUrls.length} additional URLs available)` 
-          : ''
-        console.log(`✓ Updated: ${row.grammarPoint}${additionalInfo}`)
+        const additionalInfo =
+          row.additionalUrls.length > 0
+            ? ` (${row.additionalUrls.length} additional URLs in CSV)`
+            : ''
+        const matched =
+          grammarPoint.name !== row.grammarPoint
+            ? ` (matched DB name ${JSON.stringify(grammarPoint.name)})`
+            : ''
+        console.log(`✓ Updated: ${row.grammarPoint}${matched}${additionalInfo}`)
         updated++
       } else {
         console.warn(`✗ Not found: ${row.grammarPoint}`)
@@ -135,7 +153,7 @@ async function main() {
   console.log(`✗ Not found: ${notFound}`)
   if (notFoundList.length > 0) {
     console.log('\nGrammar points not found in database:')
-    notFoundList.forEach(name => console.log(`  - ${name}`))
+    notFoundList.forEach((name) => console.log(`  - ${name}`))
   }
   console.log(`⚠ Errors: ${errors}`)
   console.log(`📊 Total processed: ${rows.length}`)

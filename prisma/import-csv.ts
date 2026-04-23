@@ -1,6 +1,27 @@
 import { PrismaClient } from '@prisma/client'
+import * as dotenv from 'dotenv'
 import * as fs from 'fs'
 import * as path from 'path'
+
+const WAVE_CHARS = ['〜', '～']
+
+function stripLeadingWave(name: string): string {
+  let s = name
+  while (s.length > 0 && WAVE_CHARS.includes(s[0])) {
+    s = s.slice(1)
+  }
+  return s.trim()
+}
+
+const databaseUrlFromShell = process.env.DATABASE_URL
+dotenv.config()
+const localEnvPath = path.join(process.cwd(), '.env.local')
+if (fs.existsSync(localEnvPath)) {
+  dotenv.config({ path: localEnvPath, override: true })
+}
+if (databaseUrlFromShell) {
+  process.env.DATABASE_URL = databaseUrlFromShell
+}
 
 const prisma = new PrismaClient()
 
@@ -24,15 +45,12 @@ function parseCSVLine(line: string): string[] {
 
     if (char === '"') {
       if (inQuotes && nextChar === '"') {
-        // Escaped quote
         current += '"'
-        i++ // Skip next quote
+        i++
       } else {
-        // Toggle quote state
         inQuotes = !inQuotes
       }
     } else if (char === ',' && !inQuotes) {
-      // End of field
       result.push(current.trim())
       current = ''
     } else {
@@ -40,7 +58,6 @@ function parseCSVLine(line: string): string[] {
     }
   }
 
-  // Add last field
   result.push(current.trim())
   return result
 }
@@ -49,7 +66,6 @@ function parseCSV(content: string): CSVRow[] {
   const lines = content.split('\n').filter((line) => line.trim())
   const rows: CSVRow[] = []
 
-  // Skip header row
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim()
     if (!line) continue
@@ -88,16 +104,69 @@ function parseCSV(content: string): CSVRow[] {
   return rows
 }
 
+/**
+ * Match CSV grammar name to an existing row (e.g. CSV `てください` ↔ DB `〜てください`).
+ * Does not rename the row; situations attach to the matched id.
+ */
+async function findGrammarPointForCsvName(csvName: string) {
+  const exact = await prisma.grammarPoint.findUnique({
+    where: { name: csvName },
+  })
+  if (exact) return exact
+
+  const candidates: string[] = []
+  if (!WAVE_CHARS.includes(csvName[0])) {
+    candidates.push(`〜${csvName}`, `～${csvName}`)
+  }
+  const stripped = stripLeadingWave(csvName)
+  if (stripped && stripped !== csvName) {
+    candidates.push(stripped)
+  }
+  for (const c of candidates) {
+    const g = await prisma.grammarPoint.findUnique({ where: { name: c } })
+    if (g) return g
+  }
+
+  const key = stripLeadingWave(csvName)
+  if (!key) return null
+  const all = await prisma.grammarPoint.findMany({
+    select: { id: true, name: true, description: true, group: true, jlptLevel: true },
+  })
+  return all.find((g) => stripLeadingWave(g.name) === key) ?? null
+}
+
+function grammarNameFilterSet(): Set<string> | null {
+  const raw = process.env.GRAMMAR_NAME_FILTER?.trim()
+  if (!raw) return null
+  return new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+  )
+}
+
+function csvRowMatchesFilter(csvGrammarName: string, filter: Set<string>): boolean {
+  for (const f of Array.from(filter)) {
+    if (csvGrammarName === f) return true
+    if (stripLeadingWave(csvGrammarName) === stripLeadingWave(f)) return true
+  }
+  return false
+}
+
 async function main() {
-  const csvPath = path.join(
+  const defaultCsvPath = path.join(
     '/Users/leo/Downloads',
     'Bunpou sublevels - N5 Situation and Vocab - Master Sheet.csv'
   )
+  const csvPath = process.env.CSV_PATH?.trim() || defaultCsvPath
 
   console.log('Reading CSV file from:', csvPath)
 
   if (!fs.existsSync(csvPath)) {
-    throw new Error(`CSV file not found at: ${csvPath}`)
+    throw new Error(
+      `CSV file not found at: ${csvPath}\nSet CSV_PATH to your Master Sheet, e.g. CSV_PATH=/path/to/sheet.csv`
+    )
   }
 
   const content = fs.readFileSync(csvPath, 'utf-8')
@@ -105,7 +174,6 @@ async function main() {
 
   console.log(`Parsed ${rows.length} rows from CSV`)
 
-  // Group rows by grammar point name
   const grammarPointMap = new Map<string, CSVRow[]>()
   for (const row of rows) {
     if (!grammarPointMap.has(row.grammarPoint)) {
@@ -114,31 +182,33 @@ async function main() {
     grammarPointMap.get(row.grammarPoint)!.push(row)
   }
 
+  const filter = grammarNameFilterSet()
+  if (filter) {
+    for (const key of Array.from(grammarPointMap.keys())) {
+      if (!csvRowMatchesFilter(key, filter)) {
+        grammarPointMap.delete(key)
+      }
+    }
+    console.log(`GRAMMAR_NAME_FILTER active — processing ${grammarPointMap.size} grammar point(s)`)
+  }
+
   console.log(`Found ${grammarPointMap.size} unique grammar points`)
 
   let grammarPointsCreated = 0
   let grammarPointsUpdated = 0
   let situationsCreated = 0
-  let situationsSkipped = 0
+  let situationsUpdated = 0
   let errors = 0
 
-  // Process each grammar point
+  const jlptLevel = process.env.JLPT_LEVEL?.trim() || 'N5'
+
   for (const [grammarPointName, situations] of Array.from(grammarPointMap.entries())) {
     try {
-      // Get the group from the first situation (all should have the same group)
       const group = situations[0].group
 
-      // Create or update grammar point
-      let grammarPoint = await prisma.grammarPoint.findUnique({
-        where: { name: grammarPointName },
-      })
-
-      // Determine JLPT level from filename (N5 in this case)
-      // For future: could be extracted from filename or passed as parameter
-      const jlptLevel = 'N5' // Default to N5 for current CSV
+      let grammarPoint = await findGrammarPointForCsvName(grammarPointName)
 
       if (grammarPoint) {
-        // Update if exists
         grammarPoint = await prisma.grammarPoint.update({
           where: { id: grammarPoint.id },
           data: {
@@ -149,8 +219,12 @@ async function main() {
           },
         })
         grammarPointsUpdated++
+        if (grammarPoint.name !== grammarPointName) {
+          console.log(
+            `  Matched CSV "${grammarPointName}" → existing DB name ${JSON.stringify(grammarPoint.name)} (${grammarPoint.id})`
+          )
+        }
       } else {
-        // Create new grammar point
         grammarPoint = await prisma.grammarPoint.create({
           data: {
             name: grammarPointName,
@@ -163,7 +237,6 @@ async function main() {
         grammarPointsCreated++
       }
 
-      // Create situations for this grammar point
       for (const situationRow of situations) {
         try {
           const existingSituation = await prisma.situation.findFirst({
@@ -174,7 +247,6 @@ async function main() {
           })
 
           if (existingSituation) {
-            // Update existing situation
             await prisma.situation.update({
               where: { id: existingSituation.id },
               data: {
@@ -183,9 +255,8 @@ async function main() {
                 difficulty: situationRow.difficulty,
               },
             })
-            situationsSkipped++
+            situationsUpdated++
           } else {
-            // Create new situation
             await prisma.situation.create({
               data: {
                 grammarPointId: grammarPoint.id,
@@ -206,7 +277,7 @@ async function main() {
         }
       }
 
-      if (grammarPointsCreated + grammarPointsUpdated % 10 === 0) {
+      if ((grammarPointsCreated + grammarPointsUpdated) % 10 === 0) {
         console.log(
           `Progress: ${grammarPointsCreated + grammarPointsUpdated}/${grammarPointMap.size} grammar points processed...`
         )
@@ -221,10 +292,9 @@ async function main() {
   console.log(`- Grammar Points Created: ${grammarPointsCreated}`)
   console.log(`- Grammar Points Updated: ${grammarPointsUpdated}`)
   console.log(`- Situations Created: ${situationsCreated}`)
-  console.log(`- Situations Updated: ${situationsSkipped}`)
+  console.log(`- Situations Updated: ${situationsUpdated}`)
   console.log(`- Errors: ${errors}`)
   console.log(`- Total Grammar Points: ${grammarPointMap.size}`)
-  console.log(`- Total Situations: ${rows.length}`)
 }
 
 main()
@@ -235,4 +305,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect()
   })
-

@@ -17,6 +17,7 @@
     "reset-users": "tsx prisma/reset-users.ts",
     "merge-duplicates": "tsx prisma/merge-duplicate-grammar-points.ts",
     "prune-user-grammar": "tsx prisma/prune-user-to-single-grammar.ts",
+    "reset-user-demo-progress": "tsx prisma/reset-user-demo-progress.ts",
     "migrate:to-vercel": "tsx prisma/migrate-to-vercel.ts migrate",
     "migrate:export": "tsx prisma/migrate-to-vercel.ts export"
   },

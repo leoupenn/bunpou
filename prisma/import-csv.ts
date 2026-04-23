@@ -209,11 +209,12 @@ async function main() {
       let grammarPoint = await findGrammarPointForCsvName(grammarPointName)
 
       if (grammarPoint) {
+        // Do not touch referenceUrl — CSV has no doc column; clearing it removed
+        // external documentation links (see import-reference-docs.ts to set URLs).
         grammarPoint = await prisma.grammarPoint.update({
           where: { id: grammarPoint.id },
           data: {
             description: grammarPointName,
-            referenceUrl: '',
             group: group,
             jlptLevel: jlptLevel,
           },

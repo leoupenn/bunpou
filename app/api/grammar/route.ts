@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUnlockedGroups } from '@/lib/group-progression'
+import type { Situation } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
+
+/** Prefer lesson 1; if missing (some imports), use the lowest lesson so Learn is not empty. */
+function situationsForNewLearner(situations: Situation[]): Situation[] {
+  const sorted = [...situations].sort((a, b) => a.lessonNumber - b.lessonNumber)
+  const lesson1 = sorted.filter((s) => s.lessonNumber === 1)
+  if (lesson1.length > 0) return lesson1
+  if (sorted.length > 0) return [sorted[0]]
+  return []
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,20 +24,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
-    // If status is 'new', return grammar points from unlocked groups that don't have progress yet
+    // If status is 'new', return grammar points in unlocked groups that are still "new":
+    // no progress row yet, OR progress.status === 'new' (signup creates rows; old logic hid them).
     if (status === 'new') {
-      // Get all unlocked groups for this user
       const unlockedGroups = await getUnlockedGroups(userId)
 
       if (unlockedGroups.length === 0) {
         return NextResponse.json([])
       }
 
-      // Get grammar points from all unlocked groups
       const unlockedGrammarPoints = await prisma.grammarPoint.findMany({
         where: {
           group: {
-            in: unlockedGroups, // Only from unlocked groups
+            in: unlockedGroups,
           },
         },
         include: {
@@ -37,40 +46,74 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: [
-          { group: 'asc' }, // Order by group first
-          { name: 'asc' }, // Then by name
-        ],
+        orderBy: [{ group: 'asc' }, { name: 'asc' }],
       })
 
-      // Get all grammar points that have progress for this user
-      const grammarPointsWithProgress = await prisma.grammarProgress.findMany({
-        where: { userId },
-        select: { grammarPointId: true },
-      })
+      if (unlockedGrammarPoints.length === 0) {
+        return NextResponse.json([])
+      }
 
-      const progressIds = new Set(grammarPointsWithProgress.map((gp) => gp.grammarPointId))
+      const gpIds = unlockedGrammarPoints.map((gp) => gp.id)
 
-      // Filter to only grammar points without progress
-      const newGrammarPoints = unlockedGrammarPoints.filter((gp) => !progressIds.has(gp.id))
-
-      // Format as GrammarProgress objects with null progress
-      // Only show first situation (lessonNumber 1) for new grammar points
-      const result = newGrammarPoints.map((gp) => ({
-        id: `new-${gp.id}`, // Temporary ID for frontend
-        grammarPoint: {
-          ...gp,
-          situations: gp.situations.filter((s) => s.lessonNumber === 1), // Only first situation
+      const progressRows = await prisma.grammarProgress.findMany({
+        where: {
+          userId,
+          grammarPointId: { in: gpIds },
         },
-        srsLevel: 0,
-        status: 'new',
-        unlockedSituationNumber: 1, // First situation unlocked
-        lastSituationId: null,
-        nextReviewAt: null,
-        lastReviewedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }))
+      })
+
+      const progressByGrammarPointId = new Map(
+        progressRows.map((p) => [p.grammarPointId, p])
+      )
+
+      const stillNew = unlockedGrammarPoints.filter((gp) => {
+        const p = progressByGrammarPointId.get(gp.id)
+        return !p || p.status === 'new'
+      })
+
+      const result = stillNew
+        .map((gp) => {
+          const p = progressByGrammarPointId.get(gp.id)
+          const situationsForLearn = situationsForNewLearner(gp.situations)
+          if (situationsForLearn.length === 0) {
+            return null
+          }
+
+        if (p) {
+          return {
+            id: p.id,
+            grammarPoint: {
+              ...gp,
+              situations: situationsForLearn,
+            },
+            srsLevel: p.srsLevel,
+            status: p.status,
+            unlockedSituationNumber: p.unlockedSituationNumber,
+            lastSituationId: p.lastSituationId,
+            nextReviewAt: p.nextReviewAt,
+            lastReviewedAt: p.lastReviewedAt,
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt,
+          }
+        }
+
+        return {
+          id: `new-${gp.id}`,
+          grammarPoint: {
+            ...gp,
+            situations: situationsForLearn,
+          },
+          srsLevel: 0,
+          status: 'new',
+          unlockedSituationNumber: 1,
+          lastSituationId: null,
+          nextReviewAt: null,
+          lastReviewedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+        })
+        .filter((row): row is NonNullable<typeof row> => row !== null)
 
       return NextResponse.json(result)
     }

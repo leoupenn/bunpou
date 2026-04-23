@@ -328,6 +328,12 @@ export default function SublevelProgress({ userId }: SublevelProgressProps) {
                       {group.grammarPoints.map((gp) => {
                         const isStarted = gp.srsLevel !== null
                         const color = getSRSColor(gp.srsLevel, isStarted)
+                        const statusLabel =
+                          gp.srsLevel === null
+                            ? 'Not started'
+                            : gp.status === 'new' && gp.srsLevel === 0
+                              ? 'New'
+                              : `Level ${gp.srsLevel}`
                         return (
                           <div
                             key={gp.id}
@@ -351,7 +357,7 @@ export default function SublevelProgress({ userId }: SublevelProgressProps) {
                             />
                             <span style={{ flex: 1, fontSize: '0.8125rem' }}>{gp.name}</span>
                             <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                              {isStarted ? `Level ${gp.srsLevel}` : 'Not started'}
+                              {statusLabel}
                             </span>
                           </div>
                         )

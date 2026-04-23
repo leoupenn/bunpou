@@ -29,6 +29,22 @@ interface GrammarProgress {
   lastSituationId?: string | null
 }
 
+async function fetchNewGrammarList(userId: string): Promise<GrammarProgress[]> {
+  const res = await fetch(`/api/grammar?userId=${userId}&status=new`, {
+    credentials: 'include',
+  })
+  const data = await res.json().catch(() => null)
+  if (!res.ok) {
+    console.error('Learn list API error:', res.status, data)
+    return []
+  }
+  if (!Array.isArray(data)) {
+    console.error('Learn list: expected array, got:', data)
+    return []
+  }
+  return data as GrammarProgress[]
+}
+
 export default function LearningPage() {
   const { user } = useUser()
   const [grammarPoints, setGrammarPoints] = useState<GrammarProgress[]>([])
@@ -38,16 +54,24 @@ export default function LearningPage() {
 
   useEffect(() => {
     if (!user) return
-    fetch(`/api/grammar?userId=${user.id}&status=new`)
-      .then((res) => res.json())
-      .then((data) => {
-        setGrammarPoints(data)
-        setLoading(false)
+    let cancelled = false
+    fetchNewGrammarList(user.id)
+      .then((list) => {
+        if (!cancelled) {
+          setGrammarPoints(list)
+          setLoading(false)
+        }
       })
       .catch((err) => {
         console.error('Error fetching grammar points:', err)
-        setLoading(false)
+        if (!cancelled) {
+          setGrammarPoints([])
+          setLoading(false)
+        }
       })
+    return () => {
+      cancelled = true
+    }
   }, [user])
 
   const handleCorrect = () => {
@@ -62,17 +86,11 @@ export default function LearningPage() {
       setCurrentIndex(currentIndex + 1)
       setCurrentSituationIndex(0) // Always use first situation for new grammar points
     } else {
-      // All done - refresh to get updated list
-      fetch(`/api/grammar?userId=${user?.id}&status=new`)
-        .then((res) => res.json())
-        .then((data) => {
-          setGrammarPoints(data)
-          setCurrentIndex(0)
-          setCurrentSituationIndex(0)
-        })
-        .catch((err) => {
-          console.error('Error fetching grammar points:', err)
-        })
+      fetchNewGrammarList(user!.id).then((list) => {
+        setGrammarPoints(list)
+        setCurrentIndex(0)
+        setCurrentSituationIndex(0)
+      })
     }
   }
 
